@@ -1,0 +1,122 @@
+TABLE.d3table {
+	table-layout: fixed;
+	min-width: 60em;
+	font-size: 0.75em;
+}
+
+TABLE.d3table a, tbody tr td .unviewableSearch, tbody tr td .fauxLink {
+    color:#091D42;
+}
+
+TABLE.d3table tbody tr td, TABLE.d3table tr th {
+     color:#aaa;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    min-width: 5em;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+TABLE.d3table thead input {
+	line-height: 1.2em;
+	vertical-align: top;
+}
+
+TABLE.d3table thead th {
+    color: #a40;
+    font-size: 1.1em;
+    background: #f8f8ff;
+	text-transform: capitalize;
+}
+
+TABLE.d3table thead th div > * {
+    box-sizing: border-box;
+}
+
+TABLE.d3table tbody tr {
+    border-top: 1px dotted #ddd;
+}
+
+/* To get round a firefox table border bug, move padding to span, apply border to span */
+
+TABLE.d3table thead th:not(:first-child) {
+    padding-left: 0;
+    padding-right: 0;
+} 
+
+TABLE.d3table tr.hiddenSearch {
+    background-color: #ddd;  
+}
+
+TABLE.d3table tbody tr.hiddenSearch {
+	border-top: 1px dotted #888;
+}
+
+TABLE.d3table svg.arrow {
+	width: 16px;
+	height: 16px;
+	border: 1px solid grey;
+	background: white;
+	margin: 0 2px;
+	transform: rotate(90deg);
+	vertical-align: top;
+}
+
+TABLE.d3table svg.arrow.active {
+	background: #bbf;
+}
+
+TABLE.d3table svg.arrow:hover, TABLE.d3table SVG.arrow.active:hover {
+	background: #ff8;
+	border-color: #444;
+}
+
+TABLE.d3table svg.arrow path {
+	stroke: none;
+	fill: darkgrey;
+	shape-rendering: crispedges;
+}
+
+TABLE.d3table svg.arrow.active path {
+	fill: black
+}
+
+TABLE.d3table svg.arrow:hover path {
+	fill: black
+}
+
+span.pageInput:before {
+    content: "Page Number ";
+}
+span.pageInput:after {
+    content: " of ";
+}
+
+.d3tableControls {
+	margin: 0.25em;
+}
+
+.d3tableControls, .d3table input {
+	font-size: 0.9rem;
+}
+
+.d3tableControls input[type='number'] {
+    max-width: 3.5em;
+	font-size: 1em;
+}
+
+.flex-header {
+	display: flex;
+	flex-direction: row;
+}
+
+.flex-header input.filterInput {
+	flex-shrink: 1;
+	flex-grow: 1;
+	min-width: 0;	/* https://bugzilla.mozilla.org/show_bug.cgi?id=1088586 */
+}
+
+.flex-header svg {
+	flex-shrink: 0;
+	flex-grow: 0;
+}
