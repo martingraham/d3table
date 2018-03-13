@@ -4,21 +4,32 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.d3Table = function () {
 	var data = [], filteredData = [], filter = [];
 	var orderKey = null;
-	var orderDirs = ["asc", "desc", "none"];
+	var orderDirs = ["asc", "desc"];
+	var rotates = [0, 180];
 	var orderDir = orderDirs[0];
 	var page = 0;
 	var pageSize = 20;
 	var columnOrder = ["key1", "key2"];
 	var selection = null;
-	var postUpdateFunc = null;
+	var postUpdate = null;
 	var dataToHTMLModifiers = {};
 	var pageCount = 1;
-	var dispatch, cellStyles, tooltips, eventHooks;
+	var dispatch, cellStyles, tooltips, cellD3Hooks;
 	
-	var filterTypeFuncs = {
+	var preprocessFilterInputFuncs = {
+		alpha: function (filterVal) {
+			// Strings split by spaces and entries must later match all substrings: As asked for by lutz and worked in the old table - issue 139
+			var parts = filterVal ? filterVal.split(" ").map (function (part) { return "(?=.*"+part+")"; }) : [];
+			return new RegExp (parts.length > 1 ? parts.join("") : filterVal, "i");
+		},
+		numeric: function (filterVal) { return filterVal ? filterVal.split(" ").map (function (part) { return Number(part); }) : filterVal; },
+		boolean: function (filterVal) { return toBoolean (filterVal); },
+	}
+	
+	var filterByTypeFuncs = {
 		alpha: function (datum, regex) { return regex.test(datum) === false; /* return datum.search(regex) < 0; */ },
-		numeric: function (datum, regex) { return regex.length <= 1 ? +datum !== regex[0] : (datum < regex[0] || datum > regex[1]); },
-		boolean: function (datum, regex) { return toBoolean (datum, true) !== regex; }													   
+		numeric: function (datum, range) { return range.length <= 1 ? +datum !== range[0] : (datum < range[0] || datum > range[1]); },
+		boolean: function (datum, bool) { return toBoolean (datum, true) !== bool; }													   
 	};
 	
 	var comparators = {
@@ -29,6 +40,8 @@ CLMSUI.d3Table = function () {
 			return aBool === toBoolean(b) ? 0 : (aBool ? 1 : -1); 
 		}
 	};
+	
+	var cache = {};
 	
 	function toBoolean (val, nullIsFalse) {
 		return (val === "1" || val === "t" || val === "true" || val === true) ? true : ((val === "0" || val === "f" || val === "false" || val === false || (val === null && nullIsFalse)) ? false : null);
@@ -72,7 +85,7 @@ CLMSUI.d3Table = function () {
 		var headerEntries = selection.datum().headerEntries;
 		cellStyles = selection.datum().cellStyles || {};
 		tooltips = selection.datum().tooltips || {};
-		eventHooks = selection.datum().eventHooks || {};
+		cellD3Hooks = selection.datum().cellD3Hooks || {};
 		
 		var headerCells = selection.select("thead tr:first-child").selectAll("th").data(headerEntries);
 		headerCells.exit().remove();
@@ -85,12 +98,37 @@ CLMSUI.d3Table = function () {
 			;
 		});
 		
+		buildHeaders (headerEntries);
+		hideFilters();
+		
+		doPageCount();
+		
+		function setPageWidget (page) {
+			selection.select(".pageInput input[type='number']").property ("value", page);
+		};
+		
+		function setOrderButton (key) {
+			var order = orderDirs.indexOf (orderDir);
+			var rotate = rotates[order];
+			selection.selectAll("svg.arrow")
+				.style ("transform", null).classed("active", false)
+				.filter (function (d) { return d.key === key; })
+				.style ("transform", "rotate("+rotate+"deg)").classed("active", true)
+			;
+		};
+		
+		dispatch = d3.dispatch ("columnHiding", "filtering", "ordering", "ordering2", "pageNumbering");
+		dispatch.on ("pageNumbering", setPageWidget);
+		dispatch.on ("ordering2", setOrderButton);
+		
+		//console.log ("data", data, filteredData);
+	}
+	
+	function buildHeaders (headerEntries) {
 		var filterCells = selection.select("thead tr:nth-child(2)").selectAll("th").data(headerEntries);
 		filterCells.exit().remove();
-		var passTypes = d3.set(d3.keys(filterTypeFuncs));
 		filterCells.enter()
 			.append("th")
-			.filter (function (d) { return passTypes.has (d.value.type); })
 			.each (function () {
 				var filterHeader = d3.select(this).append("div").attr("class", "flex-header");
 				filterHeader.append("input")
@@ -114,28 +152,13 @@ CLMSUI.d3Table = function () {
 				;
 			})
 		;
-		
-		doPageCount();
-		
-		function setPageWidget (page) {
-			selection.select(".pageInput input[type='number']").property ("value", page);
-		};
-		
-		function setOrderButton (key) {
-			var order = orderDirs.indexOf (orderDir);
-			var rotate = [0, 180, 90][order];
-			selection.selectAll("svg.arrow")
-				.style ("transform", null).classed("active", false)
-				.filter (function (d) { return d.key === key; })
-				.style ("transform", "rotate("+rotate+"deg)").classed("active", true)
-			;
-		};
-		
-		dispatch = d3.dispatch ("columnHiding", "filtering", "ordering", "ordering2", "pageNumbering");
-		dispatch.on ("pageNumbering", setPageWidget);
-		dispatch.on ("ordering2", setOrderButton);
-		
-		//console.log ("data", data, filteredData);
+	}
+	
+	function hideFilters () {
+		var passTypes = d3.set(d3.keys(filterByTypeFuncs));
+		selection.select("thead tr:nth-child(2)").selectAll("th > div")
+			.style ("display", function (d) { return passTypes.has (d.value.type) ? null : "none"; })
+		;
 	}
 	
 	function doPageCount () {
@@ -160,7 +183,7 @@ CLMSUI.d3Table = function () {
 	my.update = function () {
 		var pageData = filteredData.slice ((page - 1) * pageSize, page * pageSize);
 		var ko = this.columnOrder();
-		var modifiers = this.dataToHTMLModifiers();
+		var modifiers = this.dataToHTML();
 		
 		selection.selectAll(".pageTotal").text(pageCount);
 		
@@ -186,14 +209,14 @@ CLMSUI.d3Table = function () {
 		;	
 		
 		cells
-			.filter (function (d) { return eventHooks[d.key]; })
-			.each (function(d) { eventHooks[d.key](d3.select(this)); })
+			.filter (function (d) { return cellD3Hooks[d.key]; })
+			.each (function(d) { cellD3Hooks[d.key](d3.select(this)); })
 		;
 		
 		hideColumns();
 		
-		if (this.postUpdateFunc()) {
-			this.postUpdateFunc()(rows);
+		if (this.postUpdate()) {
+			this.postUpdate()(rows);
 		}
 	};
 	
@@ -203,11 +226,29 @@ CLMSUI.d3Table = function () {
 		return my;
 	};
 	
-	my.dataToHTMLModifiers = function (value) {
+	my.dataToHTML = function (value) {
 		if (!arguments.length) { return dataToHTMLModifiers; }
 		dataToHTMLModifiers = value;
 		return my;
 	};
+	
+	my.typeSettings = function (type, settings) {
+		if (!settings) { 
+			return { 
+				preprocessFunc: preprocessFilterInputFuncs[type],
+				filterFunc: filterByTypeFuncs[type],
+				comparator: comparators[type],
+			};
+		}
+						
+		preprocessFilterInputFuncs[type] = settings.preprocessFunc;
+		filterByTypeFuncs[type] = settings.filterFunc;
+		comparators[type] = settings.comparator;
+		
+		hideFilters();
+						
+		return my;
+	},
 	
 	my.filter = function (value) {
 		if (!arguments.length) { return filter; }
@@ -216,51 +257,42 @@ CLMSUI.d3Table = function () {
 		
 		//console.log ("ff", filter);
 		
-		// Split individual filters if they have spaces and from those parts make a regex that means values have to meet all those requirements
-		// As asked for by lutz and worked in the old table - issue 139
-		var filterRegexes = {};
+		// Parse individual filters by type
+		var processedFilterInputs = {};
 		ko.forEach (function (key) {
 			if (filter[key]) {
 				var filterVal = filter[key].value;
 				if (filterVal !== null && filterVal !== "") {
 					var filterType = filter[key].type;
-					if (filterType === 'boolean') {
-						filterRegexes[key] = toBoolean (filterVal);
-					}
-					else if (filterType === "numeric") {
-						filterRegexes[key] = filterVal ? filterVal.split(" ").map (function (part) { return Number(part); }) : filterVal;
-					}
-					else if (filterType === "alpha") {
-						var parts = filterVal ? filterVal.split(" ").map (function (part) { return "(?=.*"+part+")"; }) : [];
-						filterRegexes[key] = new RegExp (parts.length > 1 ? parts.join("") : filterVal, "i");
-					}
+					var preprocess = preprocessFilterInputFuncs[filterType];
+					processedFilterInputs[key] = preprocess ? preprocess(filterVal) : filterVal;
 				}
 			}
 		});
 		
-		var indexedFilterTypeFuncs = ko.map (function (key) {
-			return filter[key] ? filterTypeFuncs[filter[key].type] : null;
+		var indexedFilterByTypeFuncs = ko.map (function (key) {
+			return filter[key] ? filterByTypeFuncs[filter[key].type] : null;
 		});
 	
 		filteredData = data.filter (function (rowdata) {
 			var pass = true;
 			for (var n = 0; n < ko.length; n++) {
 				var key = ko[n];
-				var regex = filterRegexes[key];
-				if (regex != undefined) {
+				var parsedFilterInput = processedFilterInputs[key];
+				if (parsedFilterInput != undefined) {
 					// If array
 					var datum = rowdata[key];
 					if (Array.isArray(datum)) {
 						pass = false;
 						// just need 1 element in array to not be filtered out to pass
 						for (var m = 0; m < datum.length; m++) {
-							if (!indexedFilterTypeFuncs[n](datum[m], regex)) {
+							if (!indexedFilterByTypeFuncs[n](datum[m], parsedFilterInput)) {
 								pass = true;
 								break;
 							}
 						}
 					} else {
-						if (indexedFilterTypeFuncs[n](datum, regex)) {
+						if (indexedFilterByTypeFuncs[n](datum, parsedFilterInput)) {
 							pass = false;
 						}
 					}
@@ -362,9 +394,9 @@ CLMSUI.d3Table = function () {
 		return my;
 	};
 	
-	my.postUpdateFunc = function (value) {
-		if (!arguments.length) { return postUpdateFunc; }
-		postUpdateFunc = value;
+	my.postUpdate = function (value) {
+		if (!arguments.length) { return postUpdate; }
+		postUpdate = value;
 		return my;
 	};
 	
@@ -399,11 +431,19 @@ CLMSUI.d3Table = function () {
 		;	
 	};
 	
+	// listen to this object to catch filter / sort events
 	my.dispatch = function (value) {
 		if (!arguments.length) { return dispatch; }
 		dispatch = value;
 		return my;
 	};
+	
+	// store long calculations here that can be reused in filtering operations i.e. max / mins / averages
+	my.cache = function (setting, value) {
+		if (!value) { return cache[setting]; }
+		cache[setting] = value;
+		return my;
+	}
 	
 	return my;
 };

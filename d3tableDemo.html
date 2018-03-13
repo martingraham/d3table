@@ -15,6 +15,15 @@
 				 text-align: right;
 				 padding-right: 2em;
 			 }
+			 .colourfulNumbers span.count {
+				 background: #bb6666;
+				 color: #ff0;
+				 padding: 0 0.25em;
+				 display: inline-block;
+			 }
+			 .highlightHens {
+				 background: #ccf;
+			 }
 		 </style>
      </head>
     
@@ -27,58 +36,108 @@
 			function makeString () {
 				return Math.random().toString(36).slice(2);
 			};
+			var animals = ["ant", "bat", "cat", "dog", "eel", "fox", "gnu", "hen"];
 			
-			// headers is an array of key/value objects, keys must match property names in data
-			// value settings can decide whether field is initially visible, and/or removable
+			// data is array of objects
+			var data = d3.range(1,20000).map (function (d, i) {
+				return {
+					id: i+1, 
+					"number": Math.ceil (Math.random() * 5000), 
+					"string": makeString(), 
+					"boolean": Math.random() > .5,
+					"object": { animal: animals[Math.floor(Math.random() * 8)], count: Math.ceil (Math.random() * 5) },
+				}
+			});
+			
+			// headers is an array of key/value objects, keys should match property names in data to populate cells
+			// If using a key that's not in the data the column's cells will be empty, but you can put buttons and stuff in later
+			
+			// value settings can decide whether field is initially visible, and/or removable, simple tooltip, and a header label (name)
 			// correct type is also important for filtering and sorting
 			var headerEntries = [
 				{key: "id", value: {name: "id", visible: true, removable: true, type: "numeric"}},
 				{key: "number", value: {name: "a number", visible: true, removable: true, type: "numeric"}},
 				{key: "string", value: {name: "a string", visible: true, removable: true, type: "alpha"}},
 				{key: "boolean", value: {name: "a boolean", visible: true, removable: true, type: "boolean", tooltip: "A Boolean Column"}},
+				{key: "object", value: {name: "an object", visible: true, removable: true, type: "myObject", tooltip: "An Object Column"}},
+				{key: "button", value: {name: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
 			];
-			// data is array of objects
-			var data = d3.range(1,20000).map (function (d, i) {
-				return {id: i+1, "number": Math.ceil (Math.random() * 5000), "string": makeString(), "boolean": Math.random() > .5}
-			});
 			
+			// Comparator (for sort) and filter functions for a bespoke complex object - alpha, numeric and boolean are built-in
+			var myObjectTypeSettings = {
+				preprocessFunc: function (filterVal) {
+					return filterVal;	
+				},
+				filterFunc: function (datum, processedFilterVal) {
+					return !(datum.count === +processedFilterVal || datum.animal === processedFilterVal);
+				},
+				comparator: function (a, b) {
+					var z = a.count - b.count;
+					if (z !== 0) return z;
+					return a.animal.localeCompare (b.animal);
+				}	
+			};
+			
+			// style classes can be applied to cells for certain data
 			var cellStyles = {
-				number: "rightAlign"
+				number: "rightAlign",
+				object: "colourfulNumbers",
 			};
 			
-			var cellEventHooks = {
-				string: function (cellSel) {
-					cellSel
-					.on ("mouseover", function (d,i) {
-						d3.select("h1").text(d.value[d.key])	// here in cellEvent Hooks, d.key = field, d.values  = all field values for row that cell is in
-					})
-					.on ("mouseout", function (d,i) {
-						d3.select("h1").text("D3 Table")	
-					})
-					;
-				}
-			};
-			
+			// modify contents of table cells if you want something other than just raw data values (like buttons, or elements you want styles to apply to etc)
 			var modifiers = {
 				id: function (d) { return "ID "+d.id; },	// here in modifiers, d is just object of values indexed by field
-				number: function(d) { return d3.format(",")(d.number); },
+				number: function (d) { return d3.format(",")(d.number); },
+				object: function (d) { return "<span class='count'>"+d.object.animal+"</span>"; },
+				button: function (d) { return "<button>Press Me "+d.id+"</button>"; },
 			};
 			
+			// attr.title based simple tooltips
 			var simpleTooltips = {
 				string: function(d) { return d.value.string+" was randomly generated"; },
 				id: function(d) { return d3.values(d.value).join(", "); },
 			};
 			
-			var empowerRows = function (rowSelection) {
-				// do stuff post rendering to row selection
+			// d3 hooks can be added to elements in table cells once they've been set up, can do posher tooltips, event handling, complex styling etc
+			var cellD3Hooks = {
+				string: function (cellSel) {
+					cellSel
+					.on ("mouseover", function (d) {
+						d3.select("h1").text(d.value[d.key])	// here in cellEvent Hooks, d.key = field, d.values  = all field values for row that cell is in
+					})
+					.on ("mouseout", function () {
+						d3.select("h1").text("D3 Table")	
+					})
+					;
+				},
+				object: function (cellSel) {
+					cellSel.select(".count").style("width", function(d) { return (d.value.object.count * 10)+"px"; });
+				},
+				button: function (cellSel) {
+					cellSel.select("button").on("click", function (d) { alert ("clicked button for "+d.value.id); })
+				}
 			};
+			
+			
+			// initial filters
+			var keyedFilters = {};
+			headerEntries.forEach (function (hentry) {
+				keyedFilters[hentry.key] = {value: "", type: hentry.value.type}	
+			});
+			
+			// stuff to do to entire rows not just cells, after update has happened
+			var highlightRows = function (rowSelection) {
+				rowSelection.classed ("highlightHens", function (d) { return d.object.animal === "hen"; })
+			};
+			
+			
 			
             var d3tab = d3.select("#putd3TableHere").attr("class", "d3tableContainer")
 				.datum({
 					data: data, 
 					headerEntries: headerEntries, 
 					cellStyles: cellStyles,
-					eventHooks: cellEventHooks,
+					cellD3Hooks: cellD3Hooks,
 					tooltips: simpleTooltips,
 					columnOrder: headerEntries.map (function (hentry) { return hentry.key; }),
 				})
@@ -86,17 +145,12 @@
 			var table = CLMSUI.d3Table ();
 			table (d3tab);
 
-			// set initial filters
-			var keyedFilters = {};
-			headerEntries.forEach (function (hentry) {
-				keyedFilters[hentry.key] = {value: "", type: hentry.value.type}	
-			});
-
 			table
+				.typeSettings ("myObject", myObjectTypeSettings)
 				.filter (keyedFilters)
-				.dataToHTMLModifiers (modifiers)
-				.postUpdateFunc (empowerRows)
-				.pageSize(10)
+				.dataToHTML (modifiers)
+				.postUpdate (highlightRows)
+				.pageSize(20)
 				.update()
 			;
         </script>
