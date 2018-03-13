@@ -37,6 +37,7 @@
 				return Math.random().toString(36).slice(2);
 			};
 			var animals = ["ant", "bat", "cat", "dog", "eel", "fox", "gnu", "hen"];
+			var sausages = ["cumberland", "chorizo", "lincoln", "lorne", "bratwurst"];
 			
 			// data is array of objects
 			var data = d3.range(1,20000).map (function (d, i) {
@@ -46,6 +47,7 @@
 					"string": makeString(), 
 					"boolean": Math.random() > .5,
 					"object": { animal: animals[Math.floor(Math.random() * 8)], count: Math.ceil (Math.random() * 5) },
+					"array": [sausages[Math.floor(Math.random() * 5)], sausages[Math.floor(Math.random() * 5)]]
 				}
 			});
 			
@@ -60,6 +62,7 @@
 				{key: "string", value: {name: "a string", visible: true, removable: true, type: "alpha"}},
 				{key: "boolean", value: {name: "a boolean", visible: true, removable: true, type: "boolean", tooltip: "A Boolean Column"}},
 				{key: "object", value: {name: "an object", visible: true, removable: true, type: "myObject", tooltip: "An Object Column"}},
+				{key: "array", value: {name: "an array", visible: true, removable: true, type: "alphaArray", tooltip: "An Array Column"}},
 				{key: "button", value: {name: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
 			];
 			
@@ -78,6 +81,41 @@
 				}	
 			};
 			
+			var alphaArrayTypeSettings = {
+				preprocessFunc: function (filterVal) {
+					return this.typeSettings("alpha").preprocessFunc (filterVal);
+				},
+				filterFunc: function (datum, processedFilterVal) {
+					var basicFilterFunc = this.typeSettings("alpha").filterFunc;
+					var filteredOut = true;
+					if (Array.isArray(datum)) {
+						// just need 1 element in array to not be filtered out to pass
+						for (var m = 0; m < datum.length; m++) {
+							if (!basicFilterFunc (datum[m], processedFilterVal)) {
+								filteredOut = false;
+								break;
+							}
+						}
+					} else {
+						filteredOut = basicFilterFunc (datum, parsedFilterInput);
+					}
+					return filteredOut;
+				},
+				comparator: function (a, b) {
+					var comparator = this.typeSettings("alpha").comparator;
+					var minlen = Math.min (a.length, b.length);
+					for (var n = 0; n < minlen; n++) {
+						var diff = comparator (a[n], b[n]);
+						if (diff !== 0) {
+							return diff;
+						}
+					}
+
+					var z = a.length - b.length;
+					return z;
+				}
+			}
+			
 			// style classes can be applied to cells for certain data
 			var cellStyles = {
 				number: "rightAlign",
@@ -89,6 +127,7 @@
 				id: function (d) { return "ID "+d.id; },	// here in modifiers, d is just object of values indexed by field
 				number: function (d) { return d3.format(",")(d.number); },
 				object: function (d) { return "<span class='count'>"+d.object.animal+"</span>"; },
+				array: function (d) { return d.array.join(", "); },
 				button: function (d) { return "<button>Press Me "+d.id+"</button>"; },
 			};
 			
@@ -144,9 +183,13 @@
 			;
 			var table = CLMSUI.d3Table ();
 			table (d3tab);
+			
+			
+			
 
 			table
 				.typeSettings ("myObject", myObjectTypeSettings)
+				.typeSettings ("alphaArray", alphaArrayTypeSettings)
 				.filter (keyedFilters)
 				.dataToHTML (modifiers)
 				.postUpdate (highlightRows)

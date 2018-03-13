@@ -265,10 +265,10 @@ CLMSUI.d3Table = function () {
 				if (filterVal !== null && filterVal !== "") {
 					var filterType = filter[key].type;
 					var preprocess = preprocessFilterInputFuncs[filterType];
-					processedFilterInputs[key] = preprocess ? preprocess(filterVal) : filterVal;
+					processedFilterInputs[key] = preprocess ? preprocess.call (this,filterVal) : filterVal;
 				}
 			}
-		});
+		}, this);
 		
 		var indexedFilterByTypeFuncs = ko.map (function (key) {
 			return filter[key] ? filterByTypeFuncs[filter[key].type] : null;
@@ -282,25 +282,14 @@ CLMSUI.d3Table = function () {
 				if (parsedFilterInput != undefined) {
 					// If array
 					var datum = rowdata[key];
-					if (Array.isArray(datum)) {
+					if (indexedFilterByTypeFuncs[n].call (this, datum, parsedFilterInput)) {
 						pass = false;
-						// just need 1 element in array to not be filtered out to pass
-						for (var m = 0; m < datum.length; m++) {
-							if (!indexedFilterByTypeFuncs[n](datum[m], parsedFilterInput)) {
-								pass = true;
-								break;
-							}
-						}
-					} else {
-						if (indexedFilterByTypeFuncs[n](datum, parsedFilterInput)) {
-							pass = false;
-						}
+						break;
 					}
 				}
-				if (!pass) break;
 			}
 			return pass;
-		});
+		}, this);
 		
 		this.sort();
 		
@@ -332,8 +321,11 @@ CLMSUI.d3Table = function () {
 		
 		var comparator = orderKey ? comparators[filter[orderKey].type] : null;
 		
+		console.log ("this", this);
 		if (orderDir !== "none" && comparator) {
 			var mult = (orderDir === "asc" ? 1 : -1);
+			var context = this;
+						
 			filteredData.sort (function (a, b) {
 				var aval = a[orderKey];
 				var bval = b[orderKey];
@@ -342,7 +334,7 @@ CLMSUI.d3Table = function () {
 					return bnone ? 0 : -mult;
 				}
 				else {
-					return bnone ? mult : mult * comparator(aval, bval);
+					return bnone ? mult : mult * comparator.call (context, aval, bval);
 				}
 			});
 		}
