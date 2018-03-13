@@ -72,7 +72,7 @@
 					return filterVal;	
 				},
 				filterFunc: function (datum, processedFilterVal) {
-					return !(datum.count === +processedFilterVal || datum.animal === processedFilterVal);
+					return datum.count === +processedFilterVal || datum.animal === processedFilterVal;
 				},
 				comparator: function (a, b) {
 					var z = a.count - b.count;
@@ -87,19 +87,19 @@
 				},
 				filterFunc: function (datum, processedFilterVal) {
 					var basicFilterFunc = this.typeSettings("alpha").filterFunc;
-					var filteredOut = true;
+					var pass = false;
 					if (Array.isArray(datum)) {
 						// just need 1 element in array to not be filtered out to pass
 						for (var m = 0; m < datum.length; m++) {
-							if (!basicFilterFunc (datum[m], processedFilterVal)) {
-								filteredOut = false;
+							if (basicFilterFunc (datum[m], processedFilterVal)) {
+								pass = true;
 								break;
 							}
 						}
 					} else {
-						filteredOut = basicFilterFunc (datum, parsedFilterInput);
+						pass = basicFilterFunc (datum, processedFilterVal);
 					}
-					return filteredOut;
+					return pass;
 				},
 				comparator: function (a, b) {
 					var comparator = this.typeSettings("alpha").comparator;

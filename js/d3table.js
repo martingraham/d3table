@@ -27,9 +27,9 @@ CLMSUI.d3Table = function () {
 	}
 	
 	var filterByTypeFuncs = {
-		alpha: function (datum, regex) { return regex.test(datum) === false; /* return datum.search(regex) < 0; */ },
-		numeric: function (datum, range) { return range.length <= 1 ? +datum !== range[0] : (datum < range[0] || datum > range[1]); },
-		boolean: function (datum, bool) { return toBoolean (datum, true) !== bool; }													   
+		alpha: function (datum, regex) { return regex.test(datum) > 0; /* return datum.search(regex) >= 0; */ },
+		numeric: function (datum, range) { return range.length <= 1 ? +datum === range[0] : (datum >= range[0] && datum <= range[1]); },
+		boolean: function (datum, bool) { return toBoolean (datum, true) === bool; }													   
 	};
 	
 	var comparators = {
@@ -282,7 +282,7 @@ CLMSUI.d3Table = function () {
 				if (parsedFilterInput != undefined) {
 					// If array
 					var datum = rowdata[key];
-					if (indexedFilterByTypeFuncs[n].call (this, datum, parsedFilterInput)) {
+					if (!indexedFilterByTypeFuncs[n].call (this, datum, parsedFilterInput)) {
 						pass = false;
 						break;
 					}
