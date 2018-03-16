@@ -2,14 +2,11 @@ TABLE.d3table {
 	table-layout: fixed;
 	min-width: 60em;
 	font-size: 0.75em;
-}
-
-TABLE.d3table a, tbody tr td .unviewableSearch, tbody tr td .fauxLink {
-    color:#091D42;
+	width: 100%;
 }
 
 TABLE.d3table tbody tr td, TABLE.d3table tr th {
-     color:#aaa;
+    color:#aaa;
     text-overflow: ellipsis;
     overflow: hidden;
     min-width: 5em;
@@ -37,20 +34,11 @@ TABLE.d3table tbody tr {
     border-top: 1px dotted #ddd;
 }
 
-/* To get round a firefox table border bug, move padding to span, apply border to span */
 
 TABLE.d3table thead th:not(:first-child) {
     padding-left: 0;
     padding-right: 0;
 } 
-
-TABLE.d3table tr.hiddenSearch {
-    background-color: #ddd;  
-}
-
-TABLE.d3table tbody tr.hiddenSearch {
-	border-top: 1px dotted #888;
-}
 
 TABLE.d3table svg.arrow {
 	width: 16px;
@@ -114,6 +102,7 @@ span.pageInput:after {
 	flex-shrink: 1;
 	flex-grow: 1;
 	min-width: 0;	/* https://bugzilla.mozilla.org/show_bug.cgi?id=1088586 */
+	width: 3em; /* otherwise default input width is about 150px and stretches table width massively */
 }
 
 .flex-header svg {
