@@ -163,12 +163,15 @@
 			headerEntries.forEach (function (hentry) {
 				keyedFilters[hentry.key] = {value: "", type: hentry.value.type}	
 			});
+
 			
 			// stuff to do to entire rows not just cells, after update has happened
 			var highlightRows = function (rowSelection) {
 				rowSelection.classed ("highlightHens", function (d) { return d.object.animal === "hen"; })
 			};
 			
+			// stuff to do to entire rows that are exiting (usually clean up anything in there that needs it)
+			var exitingRows = function (rowSelection) {};
 			
 			
             var d3tab = d3.select("#putd3TableHere").attr("class", "d3tableContainer")
@@ -182,9 +185,7 @@
 				})
 			;
 			var table = CLMSUI.d3Table ();
-			table (d3tab);
-			
-			
+			table (d3tab);	
 			
 
 			table
@@ -192,6 +193,7 @@
 				.typeSettings ("alphaArray", alphaArrayTypeSettings)
 				.filter (keyedFilters)
 				.dataToHTML (modifiers)
+				.preExit (exitingRows)
 				.postUpdate (highlightRows)
 				.pageSize(20)
 				.update()

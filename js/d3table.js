@@ -12,6 +12,7 @@ CLMSUI.d3Table = function () {
 	var columnOrder = ["key1", "key2"];
 	var selection = null;
 	var postUpdate = null;
+	var preExit = null;
 	var dataToHTMLModifiers = {};
 	var pageCount = 1;
 	var dispatch, cellStyles, tooltips, cellD3Hooks;
@@ -188,11 +189,15 @@ CLMSUI.d3Table = function () {
 		selection.selectAll(".pageTotal").text(pageCount);
 		
 		var rows = selection.select("tbody").selectAll("tr").data(pageData);
+		
+		if (this.preExit()) {
+			this.preExit()(rows.exit());
+		}
 		rows.exit().remove();
+		
 		rows.enter().append("tr");
 		
 		var cells = rows.selectAll("td").data (function (d) { return ko.map (function (k) { return {key: k, value: d}; }); });
-		
 		cells.enter().append("td");
 		
 		cells
@@ -386,9 +391,17 @@ CLMSUI.d3Table = function () {
 		return my;
 	};
 	
+	/* What to do, if anything, to rows after update */
 	my.postUpdate = function (value) {
 		if (!arguments.length) { return postUpdate; }
 		postUpdate = value;
+		return my;
+	};
+	
+	/* What to do if anything, to rows that are exiting (useful if they hold objects that need disposed nicely) */
+	my.preExit = function (value) {
+		if (!arguments.length) { return preExit; }
+		preExit = value;
 		return my;
 	};
 	
