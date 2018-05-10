@@ -17,6 +17,8 @@ CLMSUI.d3Table = function () {
 	var pageCount = 1;
 	var dispatch, cellStyles, tooltips, cellD3Hooks;
 	
+	var d3v3 = d3.version[0] === "3";
+	
 	var preprocessFilterInputFuncs = {
 		alpha: function (filterVal) {
 			// Strings split by spaces and entries must later match all substrings: As asked for by lutz and worked in the old table - issue 139
@@ -90,7 +92,10 @@ CLMSUI.d3Table = function () {
 		
 		var headerCells = selection.select("thead tr:first-child").selectAll("th").data(headerEntries);
 		headerCells.exit().remove();
-		headerCells.enter().append("th").append("span");
+		var enterHeaderCells = headerCells.enter().append("th");
+		enterHeaderCells.append("span");
+		
+		if (!d3v3) { headerCells = enterHeaderCells.merge (headerCells); }
 
 		headerCells.each (function (d) {
 			d3.select(this).select("span")
@@ -125,11 +130,20 @@ CLMSUI.d3Table = function () {
 		//console.log ("data", data, filteredData);
 	}
 	
+	function dispatchWrapper (type, valueArray) {
+		d3v3 ? dispatch[type].apply(this, valueArray) : dispatch.apply (type, this, valueArray);
+	}
+	
 	function buildHeaders (headerEntries) {
 		var filterCells = selection.select("thead tr:nth-child(2)").selectAll("th").data(headerEntries);
 		filterCells.exit().remove();
-		filterCells.enter()
+		var enterFilterCells = filterCells.enter()
 			.append("th")
+		;
+		
+		if (!d3v3) { filterCells = enterFilterCells.merge (filterCells); }
+		
+		filterCells
 			.each (function () {
 				var filterHeader = d3.select(this).append("div").attr("class", "flex-header");
 				filterHeader.append("input")
@@ -145,7 +159,7 @@ CLMSUI.d3Table = function () {
 				filterHeader.append("svg").attr("class", "arrow")
 					.on ("click", function (d) {
 						my.orderKey(d.key).sort();
-						dispatch.ordering2 (d.key);
+						dispatchWrapper ("ordering2", [d.key]);
 						my.update();
 					})
 					.append ("svg:path")
@@ -195,10 +209,14 @@ CLMSUI.d3Table = function () {
 		}
 		rows.exit().remove();
 		
-		rows.enter().append("tr");
+		var enterRows = rows.enter().append("tr");
+		
+		if (!d3v3) { rows = enterRows.merge(rows); }
 		
 		var cells = rows.selectAll("td").data (function (d) { return ko.map (function (k) { return {key: k, value: d}; }); });
-		cells.enter().append("td");
+		var enterCells = cells.enter().append("td");
+		
+		if (!d3v3) { cells = enterCells.merge(cells); }
 		
 		cells
 			.html (function(d) { return modifiers[d.key] ? modifiers[d.key](d.value) : d.value[d.key]; })
@@ -310,7 +328,7 @@ CLMSUI.d3Table = function () {
 		var filter2 = selection.datum().headerEntries.map (function (hentry) {
 			return {value: filter[hentry.key] ? filter[hentry.key].value : null};
 		});
-		dispatch.filtering (filter2);
+		dispatchWrapper ("filtering", [filter2]);
 		
 		return my;
 	};
@@ -357,8 +375,8 @@ CLMSUI.d3Table = function () {
 			orderDir = orderDirs[(index + 1) % orderDirs.length];
 		}
 		
-		dispatch.ordering (my.getColumnIndex(orderKey), orderDir === "desc");
-		dispatch.ordering2 (orderKey);
+		dispatchWrapper ("ordering", [my.getColumnIndex(orderKey), orderDir === "desc"]);
+		dispatchWrapper ("ordering2", [orderKey]);
 		
 		return my;
 	};
@@ -369,8 +387,8 @@ CLMSUI.d3Table = function () {
 			orderDir = value;
 		}
 		
-		dispatch.ordering (my.getColumnIndex(orderKey), orderDir === "desc");
-		dispatch.ordering2 (orderKey);
+		dispatchWrapper ("ordering", [my.getColumnIndex(orderKey), orderDir === "desc"]);
+		dispatchWrapper ("ordering2", [orderKey]);
 		
 		return my;
 	}
@@ -379,7 +397,7 @@ CLMSUI.d3Table = function () {
 		if (!arguments.length) { return page; }
 		page = value;
 		
-		dispatch.pageNumbering (page);
+		dispatchWrapper ("pageNumbering", [page]);
 		
 		return my;
 	};
