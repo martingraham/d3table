@@ -57,12 +57,12 @@ CLMSUI.d3Table = function () {
 		columnOrder = selection.datum().columnOrder;
 		
 		if (selection.select("table").empty()) {
-			var controls = selection.append("div").attr("class", "d3tableControls pagerInfo");
+			var controls = selection.append("div").attr("class", "d3tableControls d3table-pagerInfo");
 			var pageInfo = controls.append("span")
-				.attr("class", "pageInfo")
+				.attr("class", "d3table-pageInfo")
 			;
 			pageInfo.append("span")
-				.attr("class", "pageInput")
+				.attr("class", "d3table-pageInput")
 				.append ("input")
 					.attr("type", "number")
 					.attr("length", 3)
@@ -78,7 +78,7 @@ CLMSUI.d3Table = function () {
 						//d3.select(this).property("value", val);
 					})
 			;
-        	pageInfo.append("span").attr("class", "pageTotal");
+        	pageInfo.append("span").attr("class", "d3table-pageTotal");
 			
 			var table = selection.append("table").attr("class", "d3table");
 			table.append("thead").selectAll("tr").data([0,1]).enter().append("tr");
@@ -110,16 +110,16 @@ CLMSUI.d3Table = function () {
 		doPageCount();
 		
 		function setPageWidget (page) {
-			selection.select(".pageInput input[type='number']").property ("value", page);
+			selection.select(".d3table-pageInput input[type='number']").property ("value", page);
 		};
 		
 		function setOrderButton (key) {
 			var order = orderDirs.indexOf (orderDir);
 			var rotate = rotates[order];
-			selection.selectAll("svg.arrow")
-				.style ("transform", null).classed("active", false)
+			selection.selectAll("svg.d3table-arrow")
+				.style ("transform", null).classed("d3table-active", false)
 				.filter (function (d) { return d.key === key; })
-				.style ("transform", "rotate("+rotate+"deg)").classed("active", true)
+				.style ("transform", "rotate("+rotate+"deg)").classed("d3table-active", true)
 			;
 		};
 		
@@ -145,9 +145,9 @@ CLMSUI.d3Table = function () {
 		
 		filterCells
 			.each (function () {
-				var filterHeader = d3.select(this).append("div").attr("class", "flex-header");
+				var filterHeader = d3.select(this).append("div").attr("class", "d3table-flex-header");
 				filterHeader.append("input")
-					.attr("class", "filterInput")
+					.attr("class", "d3table-filterInput")
 					.attr("type", "text")
 					//.property("value", function(d) { return filter[d.value.id].value; })
 					.on ("input", function (d) {
@@ -156,7 +156,7 @@ CLMSUI.d3Table = function () {
 						my.filter(filter).update();
 					})
 				;
-				filterHeader.append("svg").attr("class", "arrow")
+				filterHeader.append("svg").attr("class", "d3table-arrow")
 					.on ("click", function (d) {
 						my.orderKey(d.key).sort();
 						dispatchWrapper ("ordering2", [d.key]);
@@ -200,7 +200,7 @@ CLMSUI.d3Table = function () {
 		var ko = this.columnOrder();
 		var modifiers = this.dataToHTML();
 		
-		selection.selectAll(".pageTotal").text(pageCount);
+		selection.selectAll(".d3table-pageTotal").text(pageCount);
 		
 		var rows = selection.select("tbody").selectAll("tr").data(pageData);
 		
@@ -344,7 +344,6 @@ CLMSUI.d3Table = function () {
 		
 		var comparator = orderKey ? comparators[filter[orderKey].type] : null;
 		
-		console.log ("this", this);
 		if (orderDir !== "none" && comparator) {
 			var mult = (orderDir === "asc" ? 1 : -1);
 			var context = this;
