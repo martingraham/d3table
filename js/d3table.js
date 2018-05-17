@@ -344,7 +344,7 @@ CLMSUI.d3Table = function () {
 		
 		var comparator = orderKey ? comparators[filter[orderKey].type] : null;
 		
-		console.log ("this", this);
+		//console.log ("this", this);
 		if (orderDir !== "none" && comparator) {
 			var mult = (orderDir === "asc" ? 1 : -1);
 			var context = this;
