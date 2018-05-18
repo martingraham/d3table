@@ -10,6 +10,7 @@ var npmFiles = require("gulp-npm-files");
 var filter = require("gulp-filter");
 var serial = require("run-sequence");
 var bfy = require("gulp-browserify");
+var qptest = require("node-qunit-phantomjs");
 
 var outFolder = 'dist';
 var outFolder2 = 'dist/vendor';
@@ -39,6 +40,8 @@ gulp.task('minifycss', function() {
         .pipe(cssmin())
         .pipe(gulp.dest(outFolder+"/css"));
 });
+
+gulp.task('minifyAll', ['minify', 'minifycss'], function () {});
 
 
 gulp.task('copy', [], function() {
@@ -81,9 +84,13 @@ gulp.task ('copynpm', function () {
     ;
 });
 
+gulp.task ('test', function() {
+	qptest('tests/qunit.html', {verbose: true});
+});
+
 
 gulp.task ('all', ['clean'], function () {
-    serial ('copy', 'copynpm');
+    serial ('copy', 'copynpm', 'minifyAll', 'test');
 });
 
 // Default

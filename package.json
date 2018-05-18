@@ -8,7 +8,8 @@
     "minifycss": "gulp minifycss",
     "minifyall": "gulp minifyall",
     "gulp": "gulp",
-    "all": "gulp all"
+    "all": "gulp all",
+    "test": "node-qunit-phantomjs tests/qunit.html --verbose"
   },
   "homepage": "https://github.com/martingraham/d3table#readme",
   "repository": {
@@ -32,23 +33,19 @@
     "filtering"
   ],
   "devDependencies": {
-    "grunt": "~1.0.1",
     "gulp": "~3.9.1",
-    "gulp-better-rollup": "^1.1.1",
     "gulp-browserify": "^0.5.1",
     "gulp-clean": "~0.3.2",
     "gulp-cli": "~1.4.0",
     "gulp-concat": "~2.6.1",
     "gulp-cssmin": "~0.2.0",
-    "gulp-debug": "~3.1.0",
     "gulp-filter": "^5.0.1",
-    "gulp-jshint": "~2.0.4",
     "gulp-main-npm-files": "~1.0.5",
     "gulp-npm-files": "^0.1.3",
     "gulp-print": "^2.0.1",
-    "gulp-rebase": "^0.1.1",
     "gulp-rename": "~1.2.2",
     "gulp-uglify": "~3.0.0",
+    "node-qunit-phantomjs": ">=2.0.0",
     "run-sequence": "^2.1.0"
   },
   "dependencies": {

@@ -1,4 +1,13 @@
-var table = demoSetup();
+var has_require = typeof require !== 'undefined';
+console.log ("has req", has_require);
+if (has_require) {
+	var m = require ("../demo/demoSetup.js");
+	var CLMSUI = CLMSUI || {};
+	CLMSUI.demoSetup = m.demoSetup;
+}
+console.log ("demoSetup", m || CLMSUI);
+
+var table = CLMSUI.demoSetup();
 
 QUnit.test("Page size", function (assert) {
 	var expected = 20;
@@ -165,5 +174,5 @@ QUnit.test("page to 20", function (assert) {
   	assert.deepEqual (firstRowData.id, expected, "Expected id "+JSON.stringify(expected)+" first in table, Passed!");
 });
 
-console.log ("table", table);
+//console.log ("table", table);
 
