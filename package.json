@@ -1,0 +1,65 @@
+{
+  "name": "d3table",
+  "version": "1.0.0",
+  "description": "d3-based pageable table",
+  "main": "dist/js/d3table.js",
+  "scripts": {
+    "copylibs": "gulp rolluplibs",
+    "copylibcss": "gulp copylibcss",
+    "minify": "gulp minify",
+    "minifycss": "gulp minifycss",
+    "minifyall": "gulp minifyall",
+    "gulp": "gulp",
+    "copyall": "gulp copyall"
+  },
+  "homepage": "https://github.com/martingraham/d3table#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/martingraham/d3table.git"
+  },
+  "bugs": {
+    "url": "https://github.com/martingraham/d3table/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "Martin Graham <martin.graham@ed.ac.uk>",
+  "contributors": [],
+  "license": "MIT",
+  "keywords": [
+    "d3",
+    "table",
+    "sorting",
+	  "paging",
+	  "filtering"
+  ],
+  "devDependencies": {
+    "grunt": "~1.0.1",
+    "gulp": "~3.9.1",
+    "gulp-append-prepend": "^1.0.4",
+    "gulp-better-rollup": "^1.1.1",
+    "gulp-browserify": "^0.5.1",
+    "gulp-clean": "~0.3.2",
+    "gulp-cli": "~1.4.0",
+    "gulp-concat": "~2.6.1",
+    "gulp-cssmin": "~0.2.0",
+    "gulp-debug": "~3.1.0",
+    "gulp-filter": "^5.0.1",
+    "gulp-jshint": "~2.0.4",
+    "gulp-main-npm-files": "~1.0.5",
+    "gulp-npm-files": "^0.1.3",
+    "gulp-print": "^2.0.1",
+    "gulp-rebase": "^0.1.1",
+    "gulp-rename": "~1.2.2",
+    "gulp-sort-amd": "^0.9.1",
+    "gulp-uglify": "~3.0.0",
+    "gulp-webpack": "^1.5.0",
+    "gulp-wrap-umd": "^0.2.1",
+    "merge-stream": "^1.0.1",
+    "napa": "~3.0.0",
+    "run-sequence": "^2.1.0"
+  },
+  "dependencies": {
+    "d3": ">=3.5.14"
+  }
+}
