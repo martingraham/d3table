@@ -24,8 +24,8 @@ gulp.task('clean', function () {
 // Concat & Minify JS
 gulp.task('minify', function() {
     return gulp.src([outFolder+'/js/*.js'])
-        .pipe(concat('d3table.js'))
-        .pipe(gulp.dest(outFolder+"/js"))
+        .pipe(concat('merged.js'))
+        //.pipe(gulp.dest(outFolder+"/js"))	// keep intermediate, un-minified merged file
         .pipe(rename('d3table.min.js'))
         .pipe(uglify())
         .pipe(gulp.dest(outFolder+"/js"));
@@ -34,9 +34,8 @@ gulp.task('minify', function() {
 // Concat & Minify CSS
 gulp.task('minifycss', function() {
     return gulp.src([outFolder+'/css/*.css'])
-        .pipe(concat('userAdminDist.css'))
-        .pipe(gulp.dest(outFolder+"/css"))
-        .pipe(rename('userAdminDist.min.css'))
+        .pipe(concat('merged.css'))
+        .pipe(rename('d3table.min.css'))
         .pipe(cssmin())
         .pipe(gulp.dest(outFolder+"/css"));
 });
@@ -71,7 +70,7 @@ gulp.task ('copynpm', function () {
         return "**" + delim + split.slice(2).join(delim);
     });
     
-    var otherTypes = ['**/*.gif', '**/*.png', '**/*.jpg', '**/*.css', '!*/**/node_modules/**', '!**/docs/**', '!**/demos/**', '!**/examples/**', '!**/tests/**', '!**/jquery-ui/**/*.css', '!**/jquery-ui/**/*.js', '!**/zepto/**/*.js'];
+    var otherTypes = ['**/*.css', '!*/**/node_modules/**', '!**/docs/**', '!**/demos/**', '!**/tests/**'];
     var filterTo = rebasedMainjs.concat (otherTypes);
     console.log ("f", filterTo);
     
