@@ -76,9 +76,7 @@ if (has_require) {
 							.attr ("value", 1)
 							.on ("input", function () {
 								var val = d3.select(this).property("value");
-								doPageCount();
 								if (val !== "") {
-									val = Math.max (Math.min (val, pageCount), 1);
 									my.page(val).update();
 								}
 							})
@@ -186,7 +184,7 @@ if (has_require) {
 		}
 
 		function doPageCount () {
-			pageCount = Math.max (1, Math.ceil (filteredData.length / my.pageSize()));
+			pageCount = Math.max (1, Math.ceil ((filteredData ? filteredData.length : 0) / my.pageSize()));
 			return pageCount;
 		}
 
@@ -325,7 +323,6 @@ if (has_require) {
 
 			this.sort();
 
-			doPageCount();
 			my.page(1);
 
 			// update filter inputs with new filters
@@ -403,7 +400,9 @@ if (has_require) {
 
 		my.page = function (value) {
 			if (!arguments.length) { return page; }
-			page = value;
+			
+			doPageCount();
+			page = d3.median ([1, value, pageCount]);
 
 			dispatchWrapper ("pageNumbering", [page]);
 
