@@ -7,20 +7,22 @@ if (has_require) {
 }
 
 !function () {
-	function demoSetup () {
+	function demoSetup (useThisData, useThisTableContainerID) {
 		function makeString () {
 			return Math.random().toString(36).slice(2);
 		};
 		var animals = ["ant", "bat", "cat", "dog", "eel", "fox", "gnu", "hen"];
 		var sausages = ["cumberland", "chorizo", "lincoln", "lorne", "bratwurst"];
 
+		var tableContainerID = useThisTableContainerID || "putd3TableHere";
+		
 		// data is array of objects
-		var data = d3.range(0,20000).map (function (d, i) {
+		var data = useThisData || d3.range(0,20000).map (function (d, i) {
 			return {
 				id: i+1, 
 				"number": i+1, 
 				"string": makeString(), 
-				"boolean": Math.random() > .5,
+				"boolean": Math.random() > 0.5,
 				"object": { animal: animals[i % 8], count: i % 64 },
 				"array": [sausages[i % 5], sausages[Math.floor((i % 25) / 5)]]
 			}
@@ -149,11 +151,11 @@ if (has_require) {
 		var exitingRows = function (rowSelection) {};
 
 
-		var holder = d3.select("#putd3TableHere");
+		var holder = d3.select("#"+tableContainerID);
 		if (holder.empty()) {
-			d3.select("body").append("div").attr("id", "putd3TableHere");
+			d3.select("body").append("div").attr("id", tableContainerID);
 		}
-		var d3tab = d3.select("#putd3TableHere").attr("class", "d3tableContainer")
+		var d3tab = d3.select("#"+tableContainerID).attr("class", "d3tableContainer")
 			.datum({
 				data: data, 
 				headerEntries: headerEntries, 

@@ -9,6 +9,9 @@ console.log ("demoSetup", m || CLMSUI);
 
 var table = CLMSUI.demoSetup();
 
+
+QUnit.module ("Populated table");
+
 QUnit.test("Page size", function (assert) {
 	var expected = 20;
   assert.deepEqual(table.pageSize(), expected, "Expected page size "+JSON.stringify(expected)+", Passed!");
@@ -172,6 +175,16 @@ QUnit.test("page to 20", function (assert) {
 	var firstRow = table.getAllRowsSelection().filter(function(d,i) { return i === 0; });
 	var firstRowData = firstRow.datum();
   	assert.deepEqual (firstRowData.id, expected, "Expected id "+JSON.stringify(expected)+" first in table, Passed!");
+});
+
+
+QUnit.module ("Empty table");
+
+QUnit.test("empty table", function (assert) {
+	var expected = 0;
+	var emptyTable = CLMSUI.demoSetup([], "putSecondd3TableHere");
+	var tableSize = emptyTable.getAllRowsSelection().size();
+  	assert.deepEqual (tableSize, expected, "Expected empty table size is "+JSON.stringify(expected)+", Passed!");
 });
 
 //console.log ("table", table);

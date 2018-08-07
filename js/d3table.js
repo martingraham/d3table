@@ -54,39 +54,44 @@ if (has_require) {
 			return (val === "1" || val === "t" || val === "true" || val === true) ? true : ((val === "0" || val === "f" || val === "false" || val === false || (val === null && nullIsFalse)) ? false : null);
 		}
 
-		function my (mySelection) {	// data in selection should be 2d-array [[]]
+		function my (mySelection) {	// data in selection should be 2d-array [[]] or single empty array [] for empty tables
 			selection = mySelection;
 			data = selection.datum().data;
 			filteredData = data;
 			columnOrder = selection.datum().columnOrder;
 
 			if (selection.select("table").empty()) {
-				var controls = selection.append("div").attr("class", "d3tableControls d3table-pagerInfo");
-				var pageInfo = controls.append("span")
-					.attr("class", "d3table-pageInfo")
-				;
-				pageInfo.append("span")
-					.attr("class", "d3table-pageInput")
-					.append ("input")
-						.attr("type", "number")
-						.attr("length", 3)
-						.attr("min", 1)
-						.attr ("value", 1)
-						.on ("input", function () {
-							var val = d3.select(this).property("value");
-							doPageCount();
-							if (val !== "") {
-								val = Math.max (Math.min (val, pageCount), 1);
-								my.page(val).update();
-							}
-							//d3.select(this).property("value", val);
-						})
-				;
-				pageInfo.append("span").attr("class", "d3table-pageTotal");
+
+				function addPageWidget (elem, childNodeType) {
+					//console.log ("elem", elem, "this", this, "args", arguments);
+					elem.attr("class", "d3tableControls d3table-pagerInfo");
+					var pageInfo = elem.append(childNodeType || "span").attr("class", "d3table-pageInfo");
+					
+					pageInfo.append("span")
+						.attr("class", "d3table-pageInput")
+						.append ("input")
+							.attr ("type", "number")
+							.attr ("length", 3)
+							.attr ("min", 1)
+							.attr ("value", 1)
+							.on ("input", function () {
+								var val = d3.select(this).property("value");
+								doPageCount();
+								if (val !== "") {
+									val = Math.max (Math.min (val, pageCount), 1);
+									my.page(val).update();
+								}
+							})
+					;
+					pageInfo.append("span").attr("class", "d3table-pageTotal");
+				}
+				
+				selection.append("div").call(addPageWidget);	// add top page control
 
 				var table = selection.append("table").attr("class", "d3table");
 				table.append("thead").selectAll("tr").data([0,1]).enter().append("tr");
 				table.append("tbody");
+				table.append("tfoot").append("tr").call(addPageWidget, "td");	// add bottom page control
 			}
 
 			var headerEntries = selection.datum().headerEntries;
@@ -114,7 +119,7 @@ if (has_require) {
 			doPageCount();
 
 			function setPageWidget (page) {
-				selection.select(".d3table-pageInput input[type='number']").property ("value", page);
+				selection.selectAll(".d3table-pageInput input[type='number']").property ("value", page);
 			};
 
 			function setOrderButton (key) {
