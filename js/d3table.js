@@ -134,7 +134,10 @@ if (has_require) {
 			var enterHeaderCells = headerCells.enter().append("th");
 			
 			// add elements to first header row
-			enterHeaderCells.append("svg").attr("class", "d3table-arrow")
+			var headerSpans = enterHeaderCells.append("span").attr("class", "d3table-headerSpan");
+			
+			headerSpans
+				.append("svg").attr("class", "d3table-arrow")
 				.on ("click", function (d) {
 					my.orderKey(d.key).sort();
 					dispatchWrapper ("ordering2", [d.key]);
@@ -143,13 +146,13 @@ if (has_require) {
 				.append ("svg:path")
 					.attr ("d", "M7.5 4 L 13.5 10 L 1.5 10 Z")
 			;
-			enterHeaderCells.append("span");
+			headerSpans.append("span");
 
 			if (!d3v3) { headerCells = enterHeaderCells.merge (headerCells); }
 
 			// update first header row
 			headerCells.each (function (d) {
-				d3.select(this).select("span")
+				d3.select(this).select("span span")
 					.text (d.value.name)
 					.attr ("title", d.value.tooltip)
 				;
