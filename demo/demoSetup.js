@@ -42,12 +42,6 @@ if (has_require) {
 			{key: "array", value: {name: "an array", visible: true, removable: true, type: "alphaArray", tooltip: "An Array Column"}},
 			{key: "button", value: {name: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
 		];
-		
-		
-		var columnTypes = {};
-		headerEntries.forEach (function (headerEntry) {
-			columnTypes[headerEntry.key] = headerEntry.value.type;
-		});
 
 		// Comparator (for sort) and filter functions for a bespoke complex object - alpha, numeric and boolean are built-in
 		var myObjectTypeSettings = {
@@ -164,7 +158,6 @@ if (has_require) {
 		var d3tab = d3.select("#"+tableContainerID).attr("class", "d3tableContainer")
 			.datum({
 				data: data, 
-				columnTypes: columnTypes,
 				headerEntries: headerEntries, 
 				cellStyles: cellStyles,
 				cellD3Hooks: cellD3Hooks,

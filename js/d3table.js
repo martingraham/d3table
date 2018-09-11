@@ -6,7 +6,7 @@ if (has_require) {
 
 !function() {
 	var d3Table = function () {
-		var data = [], filteredData = [], columnTypes = {}, filter = [];
+		var data = [], filteredData = [], filter = [];
 		var orderKey = null;
 		var orderDirs = ["asc", "desc"];
 		var rotates = [0, 180];
@@ -58,7 +58,6 @@ if (has_require) {
 			selection = mySelection;
 			data = selection.datum().data;
 			filteredData = data;
-			columnTypes = selection.datum().columnTypes;	// {colid1: "alpha", colid2: "numeric", ... etc}
 			columnOrder = selection.datum().columnOrder;
 
 			if (selection.select("table").empty()) {
@@ -272,12 +271,6 @@ if (has_require) {
 			dataToHTMLModifiers = value;
 			return my;
 		};
-		
-		my.columnTypes = function (value) {
-			if (!arguments.length) { return columnTypes; }
-			columnTypes = value;
-			return my;
-		};
 
 		my.typeSettings = function (type, settings) {
 			if (!settings) { 
@@ -311,7 +304,7 @@ if (has_require) {
 				if (filter[key]) {
 					var filterVal = filter[key];
 					if (filterVal !== null && filterVal !== "") {
-						var columnType = columnTypes[key];
+						var columnType = my.getColumnType(key);
 						var preprocess = preprocessFilterInputFuncs[columnType];
 						processedFilterInputs[key] = preprocess ? preprocess.call (this,filterVal) : filterVal;
 					}
@@ -319,7 +312,7 @@ if (has_require) {
 			}, this);
 
 			var indexedFilterByTypeFuncs = ko.map (function (key) {
-				return filter[key] ? filterByTypeFuncs[columnTypes[key]] : null;
+				return filter[key] ? filterByTypeFuncs[my.getColumnType(key)] : null;
 			});
 
 			filteredData = data.filter (function (rowdata) {
@@ -366,7 +359,8 @@ if (has_require) {
 			var orderKey = my.orderKey();
 			var orderDir = my.orderDir();
 
-			var comparator = orderKey ? comparators[columnTypes[orderKey]] : null;
+			var orderType = my.getColumnType (orderKey);
+			var comparator = orderKey && orderType ? comparators[orderType] : null;
 
 			if (orderDir !== "none" && comparator) {
 				var mult = (orderDir === "asc" ? 1 : -1);
@@ -450,6 +444,12 @@ if (has_require) {
 
 		my.getColumnIndex = function (key) {
 			return my.columnOrder().indexOf(key);	
+		};
+		
+		my.getColumnType = function (key) {
+			var hEntries = selection.datum().headerEntries;
+			var orderColumn = hEntries.filter (function (hEntry) { return hEntry.key === key});
+			return orderColumn.length ? orderColumn[0].value.type : null;
 		};
 
 		my.getFilteredSize = function () {
