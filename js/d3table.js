@@ -6,7 +6,7 @@ if (has_require) {
 
 !function() {
 	var d3Table = function () {
-		var data = [], filteredData = [], filter = [];
+		var data = [], filteredData = [], columnTypes = {}, filter = [];
 		var orderKey = null;
 		var orderDirs = ["asc", "desc"];
 		var rotates = [0, 180];
@@ -58,6 +58,7 @@ if (has_require) {
 			selection = mySelection;
 			data = selection.datum().data;
 			filteredData = data;
+			columnTypes = selection.datum().columnTypes;	// {colid1: "alpha", colid2: "numeric", ... etc}
 			columnOrder = selection.datum().columnOrder;
 
 			if (selection.select("table").empty()) {
@@ -97,22 +98,9 @@ if (has_require) {
 			tooltips = selection.datum().tooltips || {};
 			cellD3Hooks = selection.datum().cellD3Hooks || {};
 
-			var headerCells = selection.select("thead tr:first-child").selectAll("th").data(headerEntries);
-			headerCells.exit().remove();
-			var enterHeaderCells = headerCells.enter().append("th");
-			enterHeaderCells.append("span");
-
-			if (!d3v3) { headerCells = enterHeaderCells.merge (headerCells); }
-
-			headerCells.each (function (d) {
-				d3.select(this).select("span")
-					.text (d.value.name)
-					.attr ("title", d.value.tooltip)
-				;
-			});
-
 			buildHeaders (headerEntries);
 			hideFilters();
+			hideOrderWidgets();
 
 			doPageCount();
 
@@ -137,11 +125,38 @@ if (has_require) {
 			//console.log ("data", data, filteredData);
 		}
 
-		function dispatchWrapper (type, valueArray) {
-			d3v3 ? dispatch[type].apply(this, valueArray) : dispatch.apply (type, this, valueArray);
+		function dispatchWrapper (eventType, valueArray) {
+			d3v3 ? dispatch[eventType].apply(this, valueArray) : dispatch.apply (eventType, this, valueArray);
 		}
 
 		function buildHeaders (headerEntries) {
+			var headerCells = selection.select("thead tr:first-child").selectAll("th").data(headerEntries);
+			headerCells.exit().remove();
+			var enterHeaderCells = headerCells.enter().append("th");
+			
+			// add elements to first header row
+			enterHeaderCells.append("svg").attr("class", "d3table-arrow")
+				.on ("click", function (d) {
+					my.orderKey(d.key).sort();
+					dispatchWrapper ("ordering2", [d.key]);
+					my.update();
+				})
+				.append ("svg:path")
+					.attr ("d", "M7.5 4 L 13.5 10 L 1.5 10 Z")
+			;
+			enterHeaderCells.append("span");
+
+			if (!d3v3) { headerCells = enterHeaderCells.merge (headerCells); }
+
+			// update first header row
+			headerCells.each (function (d) {
+				d3.select(this).select("span")
+					.text (d.value.name)
+					.attr ("title", d.value.tooltip)
+				;
+			});
+			
+			// add elements to second header row
 			var filterCells = selection.select("thead tr:nth-child(2)").selectAll("th").data(headerEntries);
 			filterCells.exit().remove();
 			var enterFilterCells = filterCells.enter()
@@ -150,27 +165,19 @@ if (has_require) {
 
 			if (!d3v3) { filterCells = enterFilterCells.merge (filterCells); }
 
+			// update second header row
 			filterCells
 				.each (function () {
 					var filterHeader = d3.select(this).append("div").attr("class", "d3table-flex-header");
 					filterHeader.append("input")
 						.attr("class", "d3table-filterInput")
 						.attr("type", "text")
-						//.property("value", function(d) { return filter[d.value.id].value; })
+						//.property("value", function(d) { return filter[d.value.id]; })
 						.on ("input", function (d) {
 							var filter = my.filter();
-							filter[d.key].value = d3.select(this).property("value");
+							filter[d.key] = d3.select(this).property("value");
 							my.filter(filter).update();
 						})
-					;
-					filterHeader.append("svg").attr("class", "d3table-arrow")
-						.on ("click", function (d) {
-							my.orderKey(d.key).sort();
-							dispatchWrapper ("ordering2", [d.key]);
-							my.update();
-						})
-						.append ("svg:path")
-							.attr ("d", "M7.5 4 L 13.5 10 L 1.5 10 Z")
 					;
 				})
 			;
@@ -178,9 +185,13 @@ if (has_require) {
 
 		function hideFilters () {
 			var passTypes = d3.set(d3.keys(filterByTypeFuncs));
-			selection.select("thead tr:nth-child(2)").selectAll("th > div")
+			my.getFilterCells().selectAll("div")
 				.style ("display", function (d) { return passTypes.has (d.value.type) ? null : "none"; })
 			;
+		}
+		
+		function hideOrderWidgets () {
+			my.getOrderWidgets().style ("display", function (d) { return comparators[d.value.type] ? null : "none"; });
 		}
 
 		function doPageCount () {
@@ -261,6 +272,12 @@ if (has_require) {
 			dataToHTMLModifiers = value;
 			return my;
 		};
+		
+		my.columnTypes = function (value) {
+			if (!arguments.length) { return columnTypes; }
+			columnTypes = value;
+			return my;
+		};
 
 		my.typeSettings = function (type, settings) {
 			if (!settings) { 
@@ -276,6 +293,7 @@ if (has_require) {
 			comparators[type] = settings.comparator;
 
 			hideFilters();
+			hideOrderWidgets();
 
 			return my;
 		},
@@ -291,17 +309,17 @@ if (has_require) {
 			var processedFilterInputs = {};
 			ko.forEach (function (key) {
 				if (filter[key]) {
-					var filterVal = filter[key].value;
+					var filterVal = filter[key];
 					if (filterVal !== null && filterVal !== "") {
-						var filterType = filter[key].type;
-						var preprocess = preprocessFilterInputFuncs[filterType];
+						var columnType = columnTypes[key];
+						var preprocess = preprocessFilterInputFuncs[columnType];
 						processedFilterInputs[key] = preprocess ? preprocess.call (this,filterVal) : filterVal;
 					}
 				}
 			}, this);
 
 			var indexedFilterByTypeFuncs = ko.map (function (key) {
-				return filter[key] ? filterByTypeFuncs[filter[key].type] : null;
+				return filter[key] ? filterByTypeFuncs[columnTypes[key]] : null;
 			});
 
 			filteredData = data.filter (function (rowdata) {
@@ -328,11 +346,11 @@ if (has_require) {
 			// update filter inputs with new filters
 			var filterCells = this.getFilterCells();
 			filterCells.select("input").property("value", function (d) {
-				return filter[d.key] ? filter[d.key].value : "";	
+				return filter[d.key] || "";	
 			});
 
 			var filter2 = selection.datum().headerEntries.map (function (hentry) {
-				return {value: filter[hentry.key] ? filter[hentry.key].value : null};
+				return {value: filter[hentry.key] || null};
 			});
 			dispatchWrapper ("filtering", [filter2]);
 
@@ -348,7 +366,7 @@ if (has_require) {
 			var orderKey = my.orderKey();
 			var orderDir = my.orderDir();
 
-			var comparator = orderKey ? comparators[filter[orderKey].type] : null;
+			var comparator = orderKey ? comparators[columnTypes[orderKey]] : null;
 
 			if (orderDir !== "none" && comparator) {
 				var mult = (orderDir === "asc" ? 1 : -1);
@@ -448,6 +466,17 @@ if (has_require) {
 
 		my.getHeaderCells = function () {
 			return selection.select("thead tr:first-child").selectAll("th")
+		};
+		
+		my.getOrderWidgets = function () {
+			return this.getHeaderCells().selectAll("svg.d3table-arrow");
+		};
+		
+		my.showOrderWidget = function (key, show) {
+			this.getOrderWidgets()
+				.filter (function (d) { return d.key === key; })
+				.style ("display", show ? null : "none")
+			;	
 		};
 
 		my.getFilterCells = function () {

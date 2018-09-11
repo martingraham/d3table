@@ -25,7 +25,7 @@ QUnit.test("Unfiltered data size", function (assert) {
 
 QUnit.test("filtered single id and restore", function (assert) {
 	var filter = table.filter();
-	filter.id.value = "100";
+	filter.id = "100";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), 1, "Expected 1 item in filtered data set, Passed!");
 	
@@ -34,7 +34,7 @@ QUnit.test("filtered single id and restore", function (assert) {
   	assert.deepEqual (rowCount, 1, "1 row in visible table, Passed!");
 	
 	filter = table.filter();
-	filter.id.value = "";
+	filter.id = "";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), 20000, "Expected 20000 items in filtered data set on filter removal, Passed!");
 	
@@ -45,12 +45,12 @@ QUnit.test("filtered single id and restore", function (assert) {
 
 QUnit.test("filtered range id and restore", function (assert) {
 	var filter = table.filter();
-	filter.id.value = "100 199";
+	filter.id = "100 199";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), 100, "Expected 100 items in filtered data set, Passed!");
 	
 	filter = table.filter();
-	filter.id.value = "";
+	filter.id = "";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), 20000, "Expected 20000 items in filtered data set on filter removal, Passed!");
 });
@@ -58,41 +58,41 @@ QUnit.test("filtered range id and restore", function (assert) {
 QUnit.test("set filter object", function (assert) {
 	var expected = (20000/8);
 	var filter = table.filter();
-	filter.object.value = "cat";
+	filter.object = "cat";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in filtered data set, Passed!");
 	
 	// restore table state
 	filter = table.filter();
-	filter.object.value = "";
+	filter.object = "";
 	table.filter(filter);
 });
 
 QUnit.test("set filter array", function (assert) {
 	var expected = (20000/5) + (20000/5) - (20000/25);
 	var filter = table.filter();
-	filter.array.value = "chorizo";
+	filter.array = "chorizo";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in filtered data set, Passed!");
 	
 	// restore table state
 	filter = table.filter();
-	filter.id.value = "";
+	filter.id = "";
 	table.filter(filter);
 });
 
 QUnit.test("set conjunctive filter array and object", function (assert) {
 	var expected = ((20000/5) + (20000/5) - (20000/25)) / 8;
 	var filter = table.filter();
-	filter.array.value = "chorizo";
-	filter.object.value = "cat";
+	filter.array = "chorizo";
+	filter.object = "cat";
 	table.filter(filter);
   assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in filtered data set, Passed!");
 	
 	// restore table state
 	filter = table.filter();
-	filter.array.value = "";
-	filter.object.value = "";
+	filter.array = "";
+	filter.object = "";
 	table.filter(filter);
 });
 
@@ -128,7 +128,7 @@ QUnit.test("sort by id, then filter by array", function (assert) {
 	var expected = 2;
 	table.orderKey("id").orderDir("asc").sort();
 	var filter = table.filter();
-	filter.array.value = "chorizo";
+	filter.array = "chorizo";
 	table.filter(filter);
 	table.update();
 	var firstRow = table.getAllRowsSelection().filter(function(d,i) { return i === 0; });
@@ -143,14 +143,14 @@ QUnit.test("sort by id, then filter by array", function (assert) {
 	
 	// restore table state
 	filter = table.filter();
-	filter.array.value = "";
+	filter.array = "";
 	table.filter(filter);
 });
 
 QUnit.test("filter by array, then sort by id", function (assert) {
 	var expected = 2;
 	var filter = table.filter();
-	filter.array.value = "chorizo";
+	filter.array = "chorizo";
 	table.filter(filter);
 	table.orderKey("id").orderDir("asc").sort().update();
 	var firstRow = table.getAllRowsSelection().filter(function(d,i) { return i === 0; });
@@ -165,7 +165,7 @@ QUnit.test("filter by array, then sort by id", function (assert) {
 	
 	// restore table state
 	filter = table.filter();
-	filter.array.value = "";
+	filter.array = "";
 	table.filter(filter).orderDir("asc").sort().update();
 });
 
