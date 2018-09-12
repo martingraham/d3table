@@ -22,6 +22,11 @@ if (has_require) {
 		var dispatch, cellStyles, tooltips, cellD3Hooks, accessors;
 
 		var d3v3 = d3.version[0] === "3";
+		
+		// Zero is a valid value for a filter
+		function filterHasContent (filter) {
+			return filter || (filter === 0);
+		}
 
 		var preprocessFilterInputFuncs = {
 			alpha: function (filterVal) {
@@ -29,7 +34,7 @@ if (has_require) {
 				var parts = filterVal ? filterVal.split(" ").map (function (part) { return "(?=.*"+part+")"; }) : [];
 				return new RegExp (parts.length > 1 ? parts.join("") : filterVal, "i");
 			},
-			numeric: function (filterVal) { return filterVal ? filterVal.split(" ").map (function (part) { return Number(part); }) : filterVal; },
+			numeric: function (filterVal) { return filterHasContent(filterVal) ? filterVal.toString().split(" ").map (function (part) { return Number(part); }) : filterVal; },
 			boolean: function (filterVal) { return toBoolean (filterVal); },
 		}
 
@@ -309,29 +314,27 @@ if (has_require) {
 			// Parse individual filters by type
 			var processedFilterInputs = [];
 			var accessorArray = [];
+			var indexedFilterByTypeFuncs = [];
 			ko.forEach (function (key) {
 				var preProcessOutput;
-				if (filter[key]) {
-					var filterVal = filter[key];
-					if (filterVal !== null && filterVal !== "") {
-						var columnType = my.getColumnType(key);
-						var preprocess = preprocessFilterInputFuncs[columnType];
-						preProcessOutput = preprocess ? preprocess.call (this,filterVal) : filterVal;
-					}
-				}
+				var filterVal = filter[key];
+				var filterTypeFunc = null;
+				if (filterHasContent (filterVal)) {
+					var columnType = my.getColumnType(key);
+					var preprocess = preprocessFilterInputFuncs[columnType];
+					preProcessOutput = preprocess ? preprocess.call (this, filterVal) : filterVal;
+					filterTypeFunc = filterByTypeFuncs[my.getColumnType(key)];
+				} 
 				accessorArray.push (accessors[key]);
-				processedFilterInputs.push (preProcessOutput)
-			}, this);
+				processedFilterInputs.push (preProcessOutput);
+				indexedFilterByTypeFuncs.push (filterTypeFunc);
+			}, this);		
 
-			var indexedFilterByTypeFuncs = ko.map (function (key) {
-				return filter[key] ? filterByTypeFuncs[my.getColumnType(key)] : null;
-			});
-
-			filteredData = data.filter (function (rowdata) {
+			filteredData = data.filter (function (rowdata, i) {
 				var pass = true;
 				for (var n = 0; n < ko.length; n++) {
 					var parsedFilterInput = processedFilterInputs[n];
-					if (parsedFilterInput != undefined) {
+					if (parsedFilterInput !== undefined) {
 						var accessor = accessorArray[n];
 						var key = ko[n];
 						// If accessor, use it
@@ -352,11 +355,11 @@ if (has_require) {
 			// update filter inputs with new filters
 			var filterCells = this.getFilterCells();
 			filterCells.select("input").property("value", function (d) {
-				return filter[d.key] || "";	
+				return filterHasContent(filter[d.key]) ? filter[d.key] : "";	
 			});
 
 			var filter2 = selection.datum().columnSettings.map (function (columnSetting) {
-				return {value: filter[columnSetting.key] || null};
+				return {value: (filterHasContent(columnSetting.key) ? filter[columnSetting.key] : null)};
 			});
 			dispatchWrapper ("filtering", [filter2]);
 

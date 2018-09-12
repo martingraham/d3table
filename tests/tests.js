@@ -94,6 +94,19 @@ QUnit.test("set filter deep access range", function (assert) {
 	table.filter(filter);
 });
 
+QUnit.test("set filter deep access value to zero", function (assert) {
+	var expected = 1;
+	var filter = table.filter();
+	filter.deep = 0;
+	table.filter(filter);
+    assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in filtered data set, Passed!");
+	
+	// restore table state
+	filter = table.filter();
+	filter.deep = "";
+	table.filter(filter);
+});
+
 QUnit.test("set conjunctive filter array and object", function (assert) {
 	var expected = ((20000/5) + (20000/5) - (20000/25)) / 8;
 	var filter = table.filter();
