@@ -24,7 +24,8 @@ if (has_require) {
 				"string": makeString(), 
 				"boolean": Math.random() > 0.5,
 				"object": { animal: animals[i % 8], count: i % 64 },
-				"array": [sausages[i % 5], sausages[Math.floor((i % 25) / 5)]]
+				"array": [sausages[i % 5], sausages[Math.floor((i % 25) / 5)]],
+				"deep": {deepData: i*2},
 			}
 		});
 
@@ -33,14 +34,15 @@ if (has_require) {
 
 		// value settings can decide whether field is initially visible, and/or removable, simple tooltip, and a header label (name)
 		// correct type is also important for filtering and sorting
-		var headerEntries = [
-			{key: "id", value: {name: "id", visible: true, removable: true, type: "numeric"}},
-			{key: "number", value: {name: "a number", visible: true, removable: true, type: "numeric"}},
-			{key: "string", value: {name: "a string", visible: true, removable: true, type: "alpha"}},
-			{key: "boolean", value: {name: "a boolean", visible: true, removable: true, type: "boolean", tooltip: "A Boolean Column"}},
-			{key: "object", value: {name: "an object", visible: true, removable: true, type: "myObject", tooltip: "An Object Column"}},
-			{key: "array", value: {name: "an array", visible: true, removable: true, type: "alphaArray", tooltip: "An Array Column"}},
-			{key: "button", value: {name: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
+		var columnSettings = [
+			{key: "id", value: {columnName: "id", visible: true, removable: true, type: "numeric"}},
+			{key: "number", value: {columnName: "a number", visible: true, removable: true, type: "numeric"}},
+			{key: "string", value: {columnName: "a string", visible: true, removable: true, type: "alpha"}},
+			{key: "boolean", value: {columnName: "a boolean", visible: true, removable: true, type: "boolean", tooltip: "A Boolean Column"}},
+			{key: "object", value: {columnName: "an object", visible: true, removable: true, type: "myObject", tooltip: "An Object Column"}},
+			{key: "array", value: {columnName: "an array", visible: true, removable: true, type: "alphaArray", tooltip: "An Array Column"}},
+			{key: "deep", value: {columnName: "deep access", visible: true, removable: true, type: "numeric", tooltip: "A Deep Access Column", accessor: function (d) { return d.deep.deepData; }}},
+			{key: "button", value: {columnName: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
 		];
 
 		// Comparator (for sort) and filter functions for a bespoke complex object - alpha, numeric and boolean are built-in
@@ -105,6 +107,7 @@ if (has_require) {
 			number: function (d) { return d3.format(",")(d.number); },
 			object: function (d) { return "<span class='count'>"+d.object.animal+"</span>"; },
 			array: function (d) { return d.array.join(", "); },
+			deep: function (d) { return d.deep.deepData; },
 			button: function (d) { return "<button>Press Me "+d.id+"</button>"; },
 		};
 
@@ -137,7 +140,7 @@ if (has_require) {
 
 		// initial filters
 		var keyedFilters = {};
-		headerEntries.forEach (function (hentry) {
+		columnSettings.forEach (function (hentry) {
 			keyedFilters[hentry.key] = "";
 		});
 
@@ -158,11 +161,11 @@ if (has_require) {
 		var d3tab = d3.select("#"+tableContainerID).attr("class", "d3tableContainer")
 			.datum({
 				data: data, 
-				headerEntries: headerEntries, 
+				columnSettings: columnSettings, 
 				cellStyles: cellStyles,
 				cellD3Hooks: cellD3Hooks,
 				tooltips: simpleTooltips,
-				columnOrder: headerEntries.map (function (hentry) { return hentry.key; }),
+				columnOrder: columnSettings.map (function (hentry) { return hentry.key; }), // columnOrder same as columnSettings declaration order
 			})
 		;
 		var table = CLMSUI.d3Table ();

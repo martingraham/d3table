@@ -77,7 +77,20 @@ QUnit.test("set filter array", function (assert) {
 	
 	// restore table state
 	filter = table.filter();
-	filter.id = "";
+	filter.array = "";
+	table.filter(filter);
+});
+
+QUnit.test("set filter deep access range", function (assert) {
+	var expected = ((100 - 20) / 2) + 1;	// 41
+	var filter = table.filter();
+	filter.deep = "20 100";
+	table.filter(filter);
+    assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in filtered data set, Passed!");
+	
+	// restore table state
+	filter = table.filter();
+	filter.deep = "";
 	table.filter(filter);
 });
 

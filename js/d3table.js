@@ -19,7 +19,7 @@ if (has_require) {
 		var preExit = null;
 		var dataToHTMLModifiers = {};
 		var pageCount = 1;
-		var dispatch, cellStyles, tooltips, cellD3Hooks;
+		var dispatch, cellStyles, tooltips, cellD3Hooks, accessors;
 
 		var d3v3 = d3.version[0] === "3";
 
@@ -92,12 +92,20 @@ if (has_require) {
 				table.append("tfoot").append("tr").call(addPageWidget, "td");	// add bottom page control
 			}
 
-			var headerEntries = selection.datum().headerEntries;
 			cellStyles = selection.datum().cellStyles || {};
 			tooltips = selection.datum().tooltips || {};
 			cellD3Hooks = selection.datum().cellD3Hooks || {};
+			
+			// Accessors are small functions that access bits of data that aren't simple keys of the data in the row
+			accessors = {};
+			selection.datum().columnSettings.forEach (function (columnSetting) {
+				if (columnSetting.value.accessor) {
+					accessors[columnSetting.key] = columnSetting.value.accessor;
+				}	
+			});
+			console.log ("ACCESSORS", accessors);
 
-			buildHeaders (headerEntries);
+			buildHeaders (selection.datum().columnSettings);
 			hideFilters();
 			hideOrderWidgets();
 
@@ -128,8 +136,8 @@ if (has_require) {
 			d3v3 ? dispatch[eventType].apply(this, valueArray) : dispatch.apply (eventType, this, valueArray);
 		}
 
-		function buildHeaders (headerEntries) {
-			var headerCells = selection.select("thead tr:first-child").selectAll("th").data(headerEntries);
+		function buildHeaders (columnSettings) {
+			var headerCells = my.getHeaderCells().data(columnSettings);
 			headerCells.exit().remove();
 			var enterHeaderCells = headerCells.enter().append("th");
 			
@@ -153,13 +161,13 @@ if (has_require) {
 			// update first header row
 			headerCells.each (function (d) {
 				d3.select(this).select("span span")
-					.text (d.value.name)
+					.text (d.value.columnName)
 					.attr ("title", d.value.tooltip)
 				;
 			});
 			
 			// add elements to second header row
-			var filterCells = selection.select("thead tr:nth-child(2)").selectAll("th").data(headerEntries);
+			var filterCells = my.getFilterCells().data(columnSettings);
 			filterCells.exit().remove();
 			var enterFilterCells = filterCells.enter()
 				.append("th")
@@ -207,8 +215,8 @@ if (has_require) {
 		}
 
 		function hideColumns () {
-			// hide columns that are hid by default
-			selection.datum().headerEntries.forEach (function (d, i) {
+			// hide columns that are hidden by default
+			selection.datum().columnSettings.forEach (function (d, i) {
 				if (!d.value.visible) {
 					displayColumn (i + 1, false);
 				}
@@ -299,19 +307,21 @@ if (has_require) {
 			filter = value;
 			var ko = this.columnOrder();
 
-			//console.log ("ff", filter);
-
 			// Parse individual filters by type
-			var processedFilterInputs = {};
+			var processedFilterInputs = [];
+			var accessorArray = [];
 			ko.forEach (function (key) {
+				var preProcessOutput;
 				if (filter[key]) {
 					var filterVal = filter[key];
 					if (filterVal !== null && filterVal !== "") {
 						var columnType = my.getColumnType(key);
 						var preprocess = preprocessFilterInputFuncs[columnType];
-						processedFilterInputs[key] = preprocess ? preprocess.call (this,filterVal) : filterVal;
+						preProcessOutput = preprocess ? preprocess.call (this,filterVal) : filterVal;
 					}
 				}
+				accessorArray.push (accessors[key]);
+				processedFilterInputs.push (preProcessOutput)
 			}, this);
 
 			var indexedFilterByTypeFuncs = ko.map (function (key) {
@@ -321,11 +331,12 @@ if (has_require) {
 			filteredData = data.filter (function (rowdata) {
 				var pass = true;
 				for (var n = 0; n < ko.length; n++) {
-					var key = ko[n];
-					var parsedFilterInput = processedFilterInputs[key];
+					var parsedFilterInput = processedFilterInputs[n];
 					if (parsedFilterInput != undefined) {
-						// If array
-						var datum = rowdata[key];
+						var accessor = accessorArray[n];
+						var key = ko[n];
+						// If accessor, use it
+						var datum = accessor ? accessor(rowdata) : rowdata[key];
 						if (!indexedFilterByTypeFuncs[n].call (this, datum, parsedFilterInput)) {
 							pass = false;
 							break;
@@ -345,8 +356,8 @@ if (has_require) {
 				return filter[d.key] || "";	
 			});
 
-			var filter2 = selection.datum().headerEntries.map (function (hentry) {
-				return {value: filter[hentry.key] || null};
+			var filter2 = selection.datum().columnSettings.map (function (columnSetting) {
+				return {value: filter[columnSetting.key] || null};
 			});
 			dispatchWrapper ("filtering", [filter2]);
 
@@ -364,14 +375,15 @@ if (has_require) {
 
 			var orderType = my.getColumnType (orderKey);
 			var comparator = orderKey && orderType ? comparators[orderType] : null;
+			var accessor = accessors[orderKey];
 
 			if (orderDir !== "none" && comparator) {
 				var mult = (orderDir === "asc" ? 1 : -1);
 				var context = this;
 
 				filteredData.sort (function (a, b) {
-					var aval = a[orderKey];
-					var bval = b[orderKey];
+					var aval = accessor ? accessor(a) : a[orderKey];
+					var bval = accessor ? accessor(b) : b[orderKey];
 					var bnone = bval === undefined || bval === null;
 					if (aval === undefined || aval === null) {
 						return bnone ? 0 : -mult;
@@ -450,10 +462,15 @@ if (has_require) {
 		};
 		
 		my.getColumnType = function (key) {
-			var hEntries = selection.datum().headerEntries;
-			var orderColumn = hEntries.filter (function (hEntry) { return hEntry.key === key});
+			var cSettings = selection.datum().columnSettings;
+			var orderColumn = cSettings.filter (function (cSetting) { return cSetting.key === key});
 			return orderColumn.length ? orderColumn[0].value.type : null;
 		};
+		
+		my.showColumn = function (columnIndex, show) {
+			displayColumn (columnIndex, show);
+			return my;
+		}
 
 		my.getFilteredSize = function () {
 			return filteredData.length;	
@@ -479,18 +496,20 @@ if (has_require) {
 			this.getOrderWidgets()
 				.filter (function (d) { return d.key === key; })
 				.style ("display", show ? null : "none")
-			;	
+			;
+			return my;
 		};
 
 		my.getFilterCells = function () {
-			return selection.select("thead tr:nth-child(2)").selectAll("th")
+			return selection.select("thead tr:nth-child(2)").selectAll("th");
 		};
 
-		my.showHeaderFilter = function (key, show) {
+		my.showFilterCell = function (key, show) {
 			this.getFilterCells().selectAll("div")
 				.filter (function (d) { return d.key === key; })
 				.style ("display", show ? null : "none")
-			;	
+			;
+			return my;
 		};
 
 		// listen to this object to catch filter / sort events
