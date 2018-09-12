@@ -103,7 +103,6 @@ if (has_require) {
 					accessors[columnSetting.key] = columnSetting.value.accessor;
 				}	
 			});
-			console.log ("ACCESSORS", accessors);
 
 			buildHeaders (selection.datum().columnSettings);
 			hideFilters();
