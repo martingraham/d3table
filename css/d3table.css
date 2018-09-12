@@ -11,7 +11,7 @@ TABLE.d3table tbody tr td, TABLE.d3table tr th {
     overflow: hidden;
     min-width: 5em;
     white-space: nowrap;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 TABLE.d3table thead input {
@@ -48,7 +48,7 @@ TABLE.d3table svg.d3table-arrow {
 	background: white;
 	margin: 0 0.3em 0 0;
 	transform: rotate(90deg);
-	vertical-align: top;
+	vertical-align: middle;
 }
 
 TABLE.d3table svg.d3table-arrow.d3table-active {
