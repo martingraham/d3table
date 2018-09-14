@@ -79,6 +79,8 @@ span.d3table-pageInput:after {
 
 .d3tableControls {
 	margin: 0.25em;
+	flex-grow: 0;
+	flex-shrink: 0;
 }
 
 .d3tableControls, .d3table input {
@@ -105,4 +107,14 @@ span.d3table-pageInput:after {
 .d3table-flex-header svg {
 	flex-shrink: 0;
 	flex-grow: 0;
+}
+
+.d3table-wrapper {
+	flex-grow: 1;
+	flex-shrink: 1;
+}
+
+.d3tableContainer {
+	display: flex;
+	flex-direction: column;
 }

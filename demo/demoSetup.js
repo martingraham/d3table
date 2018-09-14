@@ -34,16 +34,67 @@ if (has_require) {
 
 		// value settings can decide whether field is initially visible, and/or removable, simple tooltip, and a header label (name)
 		// correct type is also important for filtering and sorting
-		var columnSettings = [
-			{key: "id", value: {columnName: "id", visible: true, removable: true, type: "numeric"}},
-			{key: "number", value: {columnName: "a number", visible: true, removable: true, type: "numeric"}},
-			{key: "string", value: {columnName: "a string", visible: true, removable: true, type: "alpha"}},
-			{key: "boolean", value: {columnName: "a boolean", visible: true, removable: true, type: "boolean", tooltip: "A Boolean Column"}},
-			{key: "object", value: {columnName: "an object", visible: true, removable: true, type: "myObject", tooltip: "An Object Column"}},
-			{key: "array", value: {columnName: "an array", visible: true, removable: true, type: "alphaArray", tooltip: "An Array Column"}},
-			{key: "deep", value: {columnName: "deep access", visible: true, removable: true, type: "numeric", tooltip: "A Deep Access Column", accessor: function (d) { return d.deep.deepData; }}},
-			{key: "button", value: {columnName: "a button", visible: true, removable: true, type: "none", tooltip: "A Button Column"}},
-		];
+		var columnSettings = {
+			id: {columnName: "id", visible: true, removable: true, type: "numeric"},
+			number: {columnName: "a number", visible: true, removable: true, type: "numeric"},
+			string: {columnName: "a string", visible: true, removable: true, type: "alpha"},
+			boolean: {columnName: "a boolean", visible: true, removable: true, type: "boolean", headerTooltip: "A Boolean Column"},
+			object: {columnName: "an object", visible: true, removable: true, type: "myObject", headerTooltip: "An Object Column"},
+			array: {columnName: "an array", visible: true, removable: true, type: "alphaArray", headerTooltip: "An Array Column"},
+			deep: {columnName: "deep access", visible: true, removable: true, type: "numeric", headerTooltip: "A Deep Access Column", accessor: function (d) { return d.deep.deepData; }},
+			button: {columnName: "a button", visible: true, removable: true, type: "none", headerTooltip: "A Button Column"},
+		};
+		
+				// style classes can be applied to cells for certain data
+		var cellStyles = {
+			number: "rightAlign",
+			object: "colourfulNumbers",
+		};
+
+		// modify contents of table cells if you want something other than just raw data values (like buttons, or elements you want styles to apply to etc)
+		var modifiers = {
+			id: function (d) { return "ID "+d.id; },	// here in modifiers, d is just object of values indexed by field
+			number: function (d) { return d3.format(",")(d.number); },
+			object: function (d) { return "<span class='count'>"+d.object.animal+"</span>"; },
+			array: function (d) { return d.array.join(", "); },
+			deep: function (d) { return d.deep.deepData; },
+			button: function (d) { return "<button>Press Me "+d.id+"</button>"; },
+		};
+
+		// attr.title based simple tooltips
+		var simpleTooltips = {
+			string: function(d) { return d.value.string+" was randomly generated"; },
+			id: function(d) { return d3.values(d.value).join(", "); },
+		};
+
+		// d3 hooks can be added to elements in table cells once they've been set up, can do posher tooltips, event handling, complex styling etc
+		var cellD3Hooks = {
+			string: function (cellSel) {
+				cellSel
+				.on ("mouseover", function (d) {
+					d3.select("h1").text(d.value[d.key])	// here in cellEvent Hooks, d.key = field, d.values  = all field values for row that cell is in
+				})
+				.on ("mouseout", function () {
+					d3.select("h1").text("D3 Table")	
+				})
+				;
+			},
+			object: function (cellSel) {
+				cellSel.select(".count").style("width", function(d) { return (d.value.object.count * 10)+"px"; });
+			},
+			button: function (cellSel) {
+				cellSel.select("button").on("click", function (d) { alert ("clicked button for "+d.value.id); })
+			}
+		};
+		
+		var propertyNames = ["cellStyle", "dataToHTMLModifier", "tooltip", "cellD3EventHook"];
+		[cellStyles, modifiers, simpleTooltips, cellD3Hooks].forEach (function (obj, i) {
+			d3.entries(obj).forEach (function (entry) {
+				columnSettings[entry.key][propertyNames[i]] = entry.value;
+			});
+		});
+		
+		console.log ("cc", columnSettings);
 
 		// Comparator (for sort) and filter functions for a bespoke complex object - alpha, numeric and boolean are built-in
 		var myObjectTypeSettings = {
@@ -95,53 +146,11 @@ if (has_require) {
 			}
 		}
 
-		// style classes can be applied to cells for certain data
-		var cellStyles = {
-			number: "rightAlign",
-			object: "colourfulNumbers",
-		};
-
-		// modify contents of table cells if you want something other than just raw data values (like buttons, or elements you want styles to apply to etc)
-		var modifiers = {
-			id: function (d) { return "ID "+d.id; },	// here in modifiers, d is just object of values indexed by field
-			number: function (d) { return d3.format(",")(d.number); },
-			object: function (d) { return "<span class='count'>"+d.object.animal+"</span>"; },
-			array: function (d) { return d.array.join(", "); },
-			deep: function (d) { return d.deep.deepData; },
-			button: function (d) { return "<button>Press Me "+d.id+"</button>"; },
-		};
-
-		// attr.title based simple tooltips
-		var simpleTooltips = {
-			string: function(d) { return d.value.string+" was randomly generated"; },
-			id: function(d) { return d3.values(d.value).join(", "); },
-		};
-
-		// d3 hooks can be added to elements in table cells once they've been set up, can do posher tooltips, event handling, complex styling etc
-		var cellD3Hooks = {
-			string: function (cellSel) {
-				cellSel
-				.on ("mouseover", function (d) {
-					d3.select("h1").text(d.value[d.key])	// here in cellEvent Hooks, d.key = field, d.values  = all field values for row that cell is in
-				})
-				.on ("mouseout", function () {
-					d3.select("h1").text("D3 Table")	
-				})
-				;
-			},
-			object: function (cellSel) {
-				cellSel.select(".count").style("width", function(d) { return (d.value.object.count * 10)+"px"; });
-			},
-			button: function (cellSel) {
-				cellSel.select("button").on("click", function (d) { alert ("clicked button for "+d.value.id); })
-			}
-		};
-
 
 		// initial filters
 		var keyedFilters = {};
-		columnSettings.forEach (function (hentry) {
-			keyedFilters[hentry.key] = "";
+		d3.keys(columnSettings).forEach (function (columnKey) {
+			keyedFilters[columnKey] = "";
 		});
 
 
@@ -158,14 +167,11 @@ if (has_require) {
 		if (holder.empty()) {
 			d3.select("body").append("div").attr("id", tableContainerID);
 		}
-		var d3tab = d3.select("#"+tableContainerID).attr("class", "d3tableContainer")
+		var d3tab = d3.select("#"+tableContainerID)
 			.datum({
 				data: data, 
 				columnSettings: columnSettings, 
-				cellStyles: cellStyles,
-				cellD3Hooks: cellD3Hooks,
-				tooltips: simpleTooltips,
-				columnOrder: columnSettings.map (function (hentry) { return hentry.key; }), // columnOrder same as columnSettings declaration order
+				columnOrder: d3.keys(columnSettings),	// columnOrder same as columnSettings declaration order
 			})
 		;
 		var table = CLMSUI.d3Table ();
@@ -176,7 +182,6 @@ if (has_require) {
 			.typeSettings ("myObject", myObjectTypeSettings)
 			.typeSettings ("alphaArray", alphaArrayTypeSettings)
 			.filter (keyedFilters)
-			.dataToHTML (modifiers)
 			.preExit (exitingRows)
 			.postUpdate (highlightRows)
 			.pageSize(20)
