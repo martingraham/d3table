@@ -17,7 +17,7 @@ if (has_require) {
 		var postUpdate = null;
 		var preExit = null;
 		var pageCount = 1;
-		var dispatch;
+		var dispatch = d3.dispatch ("columnHiding", "filtering", "ordering", "ordering2", "pageNumbering");
 
 		var d3v3 = d3.version[0] === "3";
 		
@@ -116,9 +116,8 @@ if (has_require) {
 				;
 			};
 
-			dispatch = d3.dispatch ("columnHiding", "filtering", "ordering", "ordering2", "pageNumbering");
-			dispatch.on ("pageNumbering", setPageWidget);
-			dispatch.on ("ordering2", setOrderButton);
+			dispatch.on ("pageNumbering.internal", setPageWidget);
+			dispatch.on ("ordering2.internal", setOrderButton);
 			//console.log ("data", filteredData);
 		}
 
