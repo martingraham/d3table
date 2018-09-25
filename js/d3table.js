@@ -452,6 +452,10 @@ if (has_require) {
 		my.getFilteredSize = function () {
 			return filteredData.length;	
 		};
+		
+		my.getFilteredData = function () {
+			return filteredData.slice();
+		},
 
 		my.getData = function () {
 			return selection.datum().data;
