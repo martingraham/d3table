@@ -207,10 +207,13 @@ if (has_require) {
 			var csettings = my.columnSettings();
 			my.columnOrder().forEach (function (key, i) {
 				if (csettings[key]) {
-					var currentState = selection.select("th:nth-child("+(i+1)+")").style("display") !== "none";
-					var proposedState = csettings[key].visible;
-					if (currentState !== proposedState) {
-						displayColumn (i + 1, proposedState);
+					var lastRowCellSelect = selection.select("tbody tr:last-child td:nth-child("+(i+1)+")");
+					if (!lastRowCellSelect.empty()) {
+						var currentState = lastRowCellSelect.style("display") !== "none";
+						var proposedState = csettings[key].visible;
+						if (currentState !== proposedState) {
+							displayColumn (i + 1, proposedState);
+						}
 					}
 				}
 			})
