@@ -204,6 +204,27 @@ QUnit.test("page to 20", function (assert) {
 });
 
 
+QUnit.test("Hide columns", function (assert) {
+	//assert.expect (1);
+	var done = assert.async(2);
+	
+	var expectedColumns = 2;
+	table.showColumnByKey("id", false).showColumnByKey("array", false).update();
+	
+	setTimeout(function() {
+		var hiddenColumns = table.getHeaderCells().filter(function() { return d3.select(this).style("display") === "none"; });
+  		assert.deepEqual (hiddenColumns.size(), expectedColumns, "Expected "+JSON.stringify(expectedColumns)+" hidden columns in table, Passed!");
+		done();
+	});
+	
+	setTimeout(function() {
+		table.showColumnByKey("id", true).showColumnByKey("array", true).update();
+		done();
+	});
+	
+});
+
+
 QUnit.module ("Empty table");
 
 QUnit.test("empty table", function (assert) {

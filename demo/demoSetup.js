@@ -93,8 +93,6 @@ if (has_require) {
 				columnSettings[entry.key][propertyNames[i]] = entry.value;
 			});
 		});
-		
-		console.log ("cc", columnSettings);
 
 		// Comparator (for sort) and filter functions for a bespoke complex object - alpha, numeric and boolean are built-in
 		var myObjectTypeSettings = {
@@ -176,7 +174,6 @@ if (has_require) {
 		;
 		var table = CLMSUI.d3Table ();
 		table (d3tab);	
-
 
 		table
 			.typeSettings ("myObject", myObjectTypeSettings)
