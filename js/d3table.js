@@ -61,7 +61,7 @@ if (has_require) {
 			selection = mySelection;
 			filteredData = my.getData();
 			
-			selection.classed (".d3tableContainer", true);
+			selection.classed ("d3tableContainer", true);
 
 			if (selection.select("table").empty()) {
 
