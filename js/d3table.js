@@ -61,7 +61,7 @@ if (has_require) {
 			selection = mySelection;
 			filteredData = my.getData();
 			
-			selection.classed (".d3tableContainer", true);
+			selection.classed ("d3tableContainer", true);
 
 			if (selection.select("table").empty()) {
 
@@ -91,7 +91,7 @@ if (has_require) {
 
 				var wrapperTable = selection.append("div").attr("class", "d3table-wrapper");
 				var table = wrapperTable.append("table").attr("class", "d3table");
-				table.append("thead").selectAll("tr").data([0,1]).enter().append("tr");
+				table.append("thead").selectAll("tr").data(["","d3table-filterRow"]).enter().append("tr").attr("class", function(d) { return d; });
 				table.append("tbody");
 				table.append("tfoot").append("tr").call(addPageWidget, "td");	// add bottom page control
 			}
@@ -519,7 +519,7 @@ if (has_require) {
 		};
 
 		my.getFilterCells = function () {
-			return selection.select("thead tr:nth-child(2)").selectAll("th");
+			return selection.select("thead tr.d3table-filterRow").selectAll("th");
 		};
 
 		my.showFilterCell = function (key, show) {
