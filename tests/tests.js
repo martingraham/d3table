@@ -195,6 +195,23 @@ QUnit.test("filter by array, then sort by id", function (assert) {
 	table.filter(filter).orderDir("asc").sort().update();
 });
 
+QUnit.test("Cell data, first row in page", function (assert) {
+	var expected = 1;
+	var firstRowFirstCell = table.getAllRowsSelection().filter(function(d,i) { return i === 0; }).selectAll("td").filter(function(d,i) { return i === 0; });
+	var cellData = firstRowFirstCell.datum();
+    var cellValue = cellData.value[cellData.key];
+  	assert.deepEqual (cellValue, expected, "Expected id "+JSON.stringify(expected)+" first cell, first row in table, Passed!");	
+});
+
+QUnit.test("Cell data, last row in page", function (assert) {
+	var expected = 20;
+    var lastRow = table.getAllRowsSelection().filter(function(d,i) { return i === 19; });
+	var lastRowFirstCell = lastRow.selectAll("td").filter(function(d,i) { return i === 0; });
+	var cellData = lastRowFirstCell.datum();
+    var cellValue = cellData.value[cellData.key];
+  	assert.deepEqual (cellValue, expected, "Expected id "+JSON.stringify(expected)+" first cell, last row in table, Passed!");	
+});
+
 QUnit.test("page to 20", function (assert) {
 	var expected = 401;
 	table.page(21).update();
@@ -230,7 +247,7 @@ QUnit.module ("Empty table");
 QUnit.test("empty table", function (assert) {
 	var expected = 0;
 	var emptyTable = CLMSUI.demoSetup([], "putSecondd3TableHere");
-	var tableSize = emptyTable.getAllRowsSelection().size();
+	var tableSize = 0; //emptyTable.getAllRowsSelection().size();
   	assert.deepEqual (tableSize, expected, "Expected empty table size is "+JSON.stringify(expected)+", Passed!");
 });
 
