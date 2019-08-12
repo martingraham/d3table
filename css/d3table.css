@@ -119,3 +119,8 @@ span.d3table-pageInput:after {
 	display: flex;
 	flex-direction: column;
 }
+
+TABLE.d3table caption {
+    caption-side: bottom;
+    text-align: left;
+}

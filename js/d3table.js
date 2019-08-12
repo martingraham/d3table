@@ -73,6 +73,7 @@ if (has_require) {
 					pageInfo.append("span")
 						.attr("class", "d3table-pageInput")
 						.append ("input")
+                            .attr ("class", "d3table-pageWidget")
 							.attr ("type", "number")
 							.attr ("length", 3)
 							.attr ("min", 1)
@@ -93,7 +94,7 @@ if (has_require) {
 				var table = wrapperTable.append("table").attr("class", "d3table");
 				table.append("thead").selectAll("tr").data(["","d3table-filterRow"]).enter().append("tr").attr("class", function(d) { return d; });
 				table.append("tbody");
-				table.append("tfoot").append("tr").call(addPageWidget, "td");	// add bottom page control
+				table.append("caption").call(addPageWidget, "span");	// add bottom page control
 			}
 
 			buildHeaders ();
@@ -103,7 +104,7 @@ if (has_require) {
 			doPageCount();
 
 			function setPageWidget (page) {
-				selection.selectAll(".d3table-pageInput input[type='number']").property ("value", page);
+				selection.selectAll(".d3table-pageInput input.d3table-pageWidget").property ("value", page);
 			};
 
 			function setOrderButton (key) {
