@@ -43,6 +43,27 @@ QUnit.test("filtered single id and restore", function (assert) {
 	assert.deepEqual(rowCount, 20, "20 rows in visible table, Passed!");
 });
 
+/* regex characters are escaped and treated as literals, should be no hits given string is formed from [a-z][0-9] */
+QUnit.test("filtered string with escaped regex characters and restore", function (assert) {
+	var filter = table.filter();
+	filter.string= "*7*";
+	table.filter(filter);
+    assert.deepEqual(table.getFilteredSize(), 0, "Expected 0 items in filtered data set, Passed!");
+	
+	table.update();
+	var rowCount = table.getAllRowsSelection().size();
+  	assert.deepEqual (rowCount, 0, "0 row in visible table, Passed!");
+	
+	filter = table.filter();
+	filter.string = "";
+	table.filter(filter);
+  assert.deepEqual(table.getFilteredSize(), 20000, "Expected 20000 items in filtered data set on filter removal, Passed!");
+	
+	table.update();
+	rowCount = table.getAllRowsSelection().size();
+	assert.deepEqual(rowCount, 20, "20 rows in visible table, Passed!");
+});
+
 QUnit.test("filtered range id and restore", function (assert) {
 	var filter = table.filter();
 	filter.id = "100 199";

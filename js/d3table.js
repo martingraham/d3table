@@ -25,12 +25,19 @@ if (has_require) {
 		function filterHasContent (filter) {
 			return filter || (filter === 0);
 		}
+        
+        var escapeRegex = /[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g;    // https://stackoverflow.com/a/3561711
 
 		var preprocessFilterInputFuncs = {
 			alpha: function (filterVal) {
 				// Strings split by spaces and entries must later match all substrings: As asked for by lutz and worked in the old table - issue 139
-				var parts = filterVal ? filterVal.split(" ").map (function (part) { return "(?=.*"+part+")"; }) : [];
-				return new RegExp (parts.length > 1 ? parts.join("") : filterVal, "i");
+                var parts = filterVal ? filterVal.split(" ").map (function (part) {
+                    return part.replace (escapeRegex, '\\$&'); 
+                }) : [];
+                if (parts.length > 1) {
+                    parts = parts.map (function (part) { return "(?=.*"+part+")"; });
+                }
+				return new RegExp (parts.join(""));
 			},
 			numeric: function (filterVal) { return filterHasContent(filterVal) ? filterVal.toString().split(" ").map (function (part) { return Number(part); }) : filterVal; },
 			boolean: function (filterVal) { return toBoolean (filterVal); },
