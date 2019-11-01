@@ -37,7 +37,7 @@ if (has_require) {
                 if (parts.length > 1) {
                     parts = parts.map (function (part) { return "(?=.*"+part+")"; });
                 }
-				return new RegExp (parts.join(""));
+				return new RegExp (parts.join(""), "i");
 			},
 			numeric: function (filterVal) { return filterHasContent(filterVal) ? filterVal.toString().split(" ").map (function (part) { return Number(part); }) : filterVal; },
 			boolean: function (filterVal) { return toBoolean (filterVal); },

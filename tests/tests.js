@@ -102,6 +102,19 @@ QUnit.test("set filter array", function (assert) {
 	table.filter(filter);
 });
 
+QUnit.test("set filter array, show case insensitive", function (assert) {
+	var expected = (20000/5) + (20000/5) - (20000/25);
+	var filter = table.filter();
+	filter.array = "cHoriZo";
+	table.filter(filter);
+  assert.deepEqual(table.getFilteredSize(), expected, "Expected "+expected+" items in case insensitive filtered data set, Passed!");
+	
+	// restore table state
+	filter = table.filter();
+	filter.array = "";
+	table.filter(filter);
+});
+
 QUnit.test("set filter deep access range", function (assert) {
 	var expected = ((100 - 20) / 2) + 1;	// 41
 	var filter = table.filter();
