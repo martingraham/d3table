@@ -8,17 +8,16 @@ var print = require('gulp-print');
 var mainNpmFiles = require('gulp-main-npm-files');
 var npmFiles = require("gulp-npm-files");
 var filter = require("gulp-filter");
-var serial = require("run-sequence");
-var bfy = require("gulp-browserify");
-var qptest = require("node-qunit-phantomjs");
+var qunit = require("node-qunit-phantomjs");
+var jsdoc = require("gulp-jsdoc3");
 
 var outFolder = 'dist';
-var outFolder2 = 'dist/vendor';
+var outFolder2 = 'vendor/js';
 var nm = 'node_modules';
 
 
 gulp.task('clean', function () {
-    return gulp.src(outFolder, {read: false})
+    return gulp.src(outFolder, {read: false, allowEmpty: true})
         .pipe(clean());
 });
 
@@ -41,42 +40,32 @@ gulp.task('minifycss', function() {
         .pipe(gulp.dest(outFolder+"/css"));
 });
 
-gulp.task('minifyAll', ['minify', 'minifycss'], function () {});
+gulp.task('minifyAll', gulp.parallel('minify', 'minifycss'));
 
 
-gulp.task('copy', [], function() {
+gulp.task('copy', function() {
     return gulp.src (['*.html', './js/*', './css/*'], {base: '.'})
         .pipe (print())
         .pipe (gulp.dest(outFolder))
     ;
 });
 
-gulp.task('bfy', [], function() {
-    return gulp.src (outFolder2+"/**/*.js", {base: '.'})
-        .pipe (print())
-        .pipe (bfy({
-            //insertGlobals : true,
-        }))
-        .pipe (gulp.dest("."))
-    ;
-});
-
 gulp.task ('copynpm', function () {
     var mainjs = mainNpmFiles();
-    
+
     console.log (mainjs);
-    
+
     var delim = '/';
     var rebasedMainjs = mainjs.map (function (js) {
         js = js.replace ("/./", "/");
         var split = js.split (delim);
         return "**" + delim + split.slice(2).join(delim);
     });
-    
+
     var otherTypes = ['**/*.css', '!*/**/node_modules/**', '!**/docs/**', '!**/demos/**', '!**/tests/**'];
     var filterTo = rebasedMainjs.concat (otherTypes);
     console.log ("f", filterTo);
-    
+
     return gulp.src (npmFiles(), { base: "./"+nm })
         .pipe (filter (filterTo))
         .pipe (print())
@@ -84,14 +73,19 @@ gulp.task ('copynpm', function () {
     ;
 });
 
-gulp.task ('test', function() {
-	qptest('tests/qunit.html', {verbose: true});
+gulp.task ('docs', function(cb) {
+    gulp.src(['./js/d3table.js'], {read: false})
+        .pipe(jsdoc(cb))
+    ;
+});
+
+gulp.task ('tests', function(cb) {
+    qunit('tests/qunit.html', {verbose: true});
+    cb();
 });
 
 
-gulp.task ('all', ['clean'], function () {
-    serial ('copy', 'copynpm', 'minifyAll', 'test');
-});
+gulp.task ('all', gulp.series('clean', 'copy', 'copynpm', 'docs', 'minifyAll', 'tests'));
 
 // Default
-gulp.task('default', ['all']);
+gulp.task('default', gulp.series('all'));
